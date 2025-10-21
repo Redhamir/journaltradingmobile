@@ -2,22 +2,21 @@
   "name": "Journal de Trading",
   "short_name": "TradingApp",
   "description": "Application de suivi des trades",
-  "start_url": "/",
+  "start_url": "/JournalTradingMobile/",
   "display": "standalone",
   "background_color": "#0A0A0A",
   "theme_color": "#00C48C",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "icons/icon-192.png",
+      "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "icons/icon-512.png",
+      "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
-  ],
-  "categories": ["finance", "business"]
+  ]
 }
