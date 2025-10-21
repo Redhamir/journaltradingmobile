@@ -21,7 +21,6 @@
             --gray-500: #6B7280;
             --gray-600: #4B5563;
             --gray-700: #374151;
-            --gray-800: #1F2937;
             --gray-900: #111827;
             --green: #00C48C;
             --red: #FF5C63;
@@ -58,6 +57,8 @@
             display: flex;
             flex-direction: column;
             transition: transform 0.3s ease;
+            position: relative;
+            z-index: 100;
         }
 
         .brand {
@@ -541,6 +542,18 @@
             font-size: 20px;
         }
 
+        /* Mobile Overlay */
+        .mobile-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 99;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .app {
@@ -559,6 +572,10 @@
 
             .sidebar.active {
                 left: 0;
+            }
+
+            .mobile-overlay.active {
+                display: block;
             }
 
             .mobile-header {
@@ -615,6 +632,9 @@
 <body>
     <!-- Toast Container -->
     <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay" id="mobileOverlay"></div>
 
     <div class="app">
         <!-- Mobile Header -->
@@ -955,12 +975,18 @@
     </div>
 
     <script>
-        // Configuration Supabase
+        // Configuration Supabase CORRIGÉE
         const SUPABASE_URL = 'https://jbdtjiffupkqxomktzyd.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpiZHRqaWZmdXBrcXhvbWt0enlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEwNDAzMzUsImV4cCI6MjA3NjYxNjMzNX0.ZkZq-_246t2hzsQre4XN5EOak0Ey2JmSDyU2_ElNacc';
         
-        // Initialisation Supabase
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // Initialisation Supabase avec gestion d'erreur
+        let supabase;
+        try {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } catch (error) {
+            console.error('Erreur initialisation Supabase:', error);
+            showToast('Erreur de configuration Supabase', 'error');
+        }
         
         // État de l'application
         let trades = [];
@@ -997,11 +1023,19 @@
             return toast;
         }
 
-        // Gestion de l'authentification Supabase
+        // Gestion de l'authentification Supabase CORRIGÉE
         async function checkAuth() {
             try {
+                if (!supabase) {
+                    console.error('Supabase non initialisé');
+                    return false;
+                }
+
                 const { data: { session }, error } = await supabase.auth.getSession();
-                if (error) throw error;
+                if (error) {
+                    console.error('Erreur session Supabase:', error);
+                    return false;
+                }
                 
                 if (session) {
                     currentUser = session.user;
@@ -1012,12 +1046,17 @@
                 return false;
             } catch (error) {
                 console.error('Erreur vérification auth:', error);
+                showToast('Erreur de connexion au serveur', 'error');
                 return false;
             }
         }
 
         async function signUp(email, password) {
             try {
+                if (!supabase) {
+                    return { success: false, error: 'Supabase non initialisé' };
+                }
+
                 const { data, error } = await supabase.auth.signUp({
                     email,
                     password,
@@ -1026,12 +1065,17 @@
                 if (error) throw error;
                 return { success: true, data };
             } catch (error) {
+                console.error('Erreur inscription:', error);
                 return { success: false, error: error.message };
             }
         }
 
         async function signIn(email, password) {
             try {
+                if (!supabase) {
+                    return { success: false, error: 'Supabase non initialisé' };
+                }
+
                 const { data, error } = await supabase.auth.signInWithPassword({
                     email,
                     password,
@@ -1040,12 +1084,18 @@
                 if (error) throw error;
                 return { success: true, data };
             } catch (error) {
+                console.error('Erreur connexion:', error);
                 return { success: false, error: error.message };
             }
         }
 
         async function signOut() {
             try {
+                if (!supabase) {
+                    showToast('Supabase non initialisé', 'error');
+                    return;
+                }
+
                 const { error } = await supabase.auth.signOut();
                 if (error) throw error;
                 
@@ -1058,17 +1108,35 @@
             }
         }
 
+        // Fonction de chargement des trades CORRIGÉE
         async function loadTradesFromCloud() {
-            if (!currentUser) return false;
+            if (!currentUser || !supabase) {
+                console.log('Utilisateur non connecté ou Supabase non initialisé');
+                return false;
+            }
             
             try {
+                console.log('Chargement des trades depuis le cloud pour user:', currentUser.id);
+                
                 const { data: cloudTrades, error } = await supabase
                     .from('trades')
                     .select('*')
                     .eq('user_id', currentUser.id)
                     .order('created_at', { ascending: false });
                     
-                if (error) throw error;
+                if (error) {
+                    console.error('Erreur Supabase:', error);
+                    
+                    // Vérifier si la table existe
+                    if (error.message.includes('relation') && error.message.includes('does not exist')) {
+                        showToast('Table trades non trouvée. Vérifiez la configuration Supabase.', 'error');
+                        return false;
+                    }
+                    
+                    throw error;
+                }
+                
+                console.log('Trades chargés:', cloudTrades);
                 
                 if (cloudTrades && cloudTrades.length > 0) {
                     trades = cloudTrades.map(trade => ({
@@ -1084,19 +1152,46 @@
                     
                     showToast(`${cloudTrades.length} trades chargés depuis le cloud`, 'success');
                     return true;
+                } else {
+                    showToast('Aucun trade trouvé dans le cloud', 'info');
+                    return false;
                 }
-                return false;
             } catch (error) {
                 console.error('Erreur chargement cloud:', error);
-                showToast('Erreur chargement cloud', 'error');
+                
+                let errorMessage = 'Erreur chargement cloud';
+                if (error.message.includes('JWT')) {
+                    errorMessage = 'Erreur d\'authentification. Veuillez vous reconnecter.';
+                } else if (error.message.includes('Failed to fetch')) {
+                    errorMessage = 'Erreur de connexion au serveur. Vérifiez votre connexion internet.';
+                }
+                
+                showToast(errorMessage, 'error');
                 return false;
             }
         }
 
         async function syncTradesToCloud() {
-            if (!currentUser) return false;
+            if (!currentUser || !supabase) {
+                showToast('Veuillez vous connecter pour synchroniser', 'warning');
+                return false;
+            }
             
             try {
+                showToast('Synchronisation en cours...', 'info');
+                
+                // Vérifier d'abord si la table existe
+                const { error: testError } = await supabase
+                    .from('trades')
+                    .select('id')
+                    .limit(1);
+                    
+                if (testError && testError.message.includes('does not exist')) {
+                    showToast('Table trades non configurée dans Supabase', 'error');
+                    return false;
+                }
+                
+                // Préparer les données avec user_id
                 const tradesWithUserId = trades.map(trade => ({
                     ...trade,
                     user_id: currentUser.id,
@@ -1109,11 +1204,11 @@
                     
                 if (error) throw error;
                 
-                showToast(`${trades.length} trades synchronisés`, 'success');
+                showToast(`${trades.length} trades synchronisés avec le cloud`, 'success');
                 return true;
             } catch (error) {
                 console.error('Erreur synchronisation:', error);
-                showToast('Erreur synchronisation', 'error');
+                showToast('Erreur de synchronisation: ' + error.message, 'error');
                 return false;
             }
         }
@@ -1182,6 +1277,50 @@
                 renderHeatmap();
                 initSymbolChart();
             }
+        }
+
+        // Gestion mobile CORRIGÉE
+        function initMobileMenu() {
+            const sidebar = document.getElementById('sidebar');
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const mobileOverlay = document.getElementById('mobileOverlay');
+            
+            function openSidebar() {
+                sidebar.classList.add('active');
+                mobileOverlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+            
+            function closeSidebar() {
+                sidebar.classList.remove('active');
+                mobileOverlay.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            }
+            
+            mobileMenuBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (sidebar.classList.contains('active')) {
+                    closeSidebar();
+                } else {
+                    openSidebar();
+                }
+            });
+            
+            mobileOverlay.addEventListener('click', closeSidebar);
+            
+            // Fermer la sidebar quand on clique sur un lien
+            sidebar.addEventListener('click', (e) => {
+                if (e.target.classList.contains('nav-item') || e.target.closest('.nav-item')) {
+                    setTimeout(closeSidebar, 300);
+                }
+            });
+            
+            // Fermer la sidebar avec la touche Escape
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && sidebar.classList.contains('active')) {
+                    closeSidebar();
+                }
+            });
         }
 
         // Gestion des données
@@ -1497,6 +1636,7 @@
         document.addEventListener('DOMContentLoaded', async function() {
             // Initialisation
             initChart();
+            initMobileMenu(); // Initialisation du menu mobile CORRIGÉE
             
             // Vérifier l'authentification au démarrage
             await checkAuth();
@@ -1547,11 +1687,6 @@
             
             document.getElementById('mobileNewTrade').addEventListener('click', () => {
                 openModal('tradeModal');
-            });
-            
-            // Mobile menu
-            document.getElementById('mobileMenuBtn').addEventListener('click', () => {
-                document.getElementById('sidebar').classList.toggle('active');
             });
             
             // Auth tabs
@@ -1771,17 +1906,19 @@
             });
 
             // Écouter les changements d'authentification
-            supabase.auth.onAuthStateChange(async (event, session) => {
-                if (event === 'SIGNED_IN' && session) {
-                    currentUser = session.user;
-                    updateUIForUser();
-                    await loadTradesFromCloud();
-                } else if (event === 'SIGNED_OUT') {
-                    currentUser = null;
-                    updateUIForUser();
-                    loadTradesLocal();
-                }
-            });
+            if (supabase) {
+                supabase.auth.onAuthStateChange(async (event, session) => {
+                    if (event === 'SIGNED_IN' && session) {
+                        currentUser = session.user;
+                        updateUIForUser();
+                        await loadTradesFromCloud();
+                    } else if (event === 'SIGNED_OUT') {
+                        currentUser = null;
+                        updateUIForUser();
+                        loadTradesLocal();
+                    }
+                });
+            }
         });
 
         function openAuthModal(type) {
