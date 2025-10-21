@@ -1,1298 +1,1809 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  
-  <!-- ICÔNES PWA -->
-  <meta name="apple-mobile-web-app-title" content="Trading Journal">
-  <link rel="apple-touch-icon" href="icon-180.png">
-  <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
-  <link rel="apple-touch-icon" sizes="167x167" href="icon-167.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
-  <link rel="icon" type="image/png" href="icon-192.png">
-  
-  <!-- CONFIGURATION PWA -->
-  <meta name="theme-color" content="#00C48C">
-  <meta name="msapplication-TileColor" content="#00C48C">
-  <link rel="manifest" href="manifest.json">
-  
-  <title>Journal de trading — Mobile</title>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    :root {
-      --bg: #0A0A0A;
-      --bg-card: #1A1A1A;
-      --fg: #F5F5F5;
-      --muted: #A8A8A8;
-      --accent-green: #00C48C;
-      --accent-red: #FF5C63;
-      --accent-blue: #3B82F6;
-      --glass: rgba(30, 30, 30, 0.95);
-      --border: rgba(255,255,255,0.15);
-      --shadow: 0 8px 32px rgba(0,0,0,0.4);
-      --overlay: rgba(0,0,0,0.8);
-    }
-
-    [data-theme="light"] {
-      --bg: #FFFFFF;
-      --bg-card: #F8F9FA;
-      --fg: #1A1A1A;
-      --muted: #666666;
-      --accent-green: #00A876;
-      --accent-red: #E53E3E;
-      --accent-blue: #1D4ED8;
-      --glass: rgba(248, 249, 250, 0.95);
-      --border: rgba(0,0,0,0.15);
-      --shadow: 0 8px 32px rgba(0,0,0,0.1);
-      --overlay: rgba(0,0,0,0.4);
-    }
-
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    html, body {
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      background: var(--bg);
-      color: var(--fg);
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      overflow: hidden;
-      position: fixed;
-      width: 100%;
-    }
-
-    /* Container principal */
-    .app {
-      height: 100vh;
-      height: 100dvh;
-      display: flex;
-      flex-direction: column;
-      background: var(--bg);
-    }
-
-    /* Header mobile */
-    .mobile-header {
-      padding: 12px 16px;
-      padding-top: max(12px, env(safe-area-inset-top));
-      background: var(--bg-card);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      min-height: 60px;
-      position: relative;
-      z-index: 100;
-    }
-
-    .header-title {
-      font-weight: 700;
-      font-size: 18px;
-      margin: 0;
-    }
-
-    .header-actions {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .icon-btn {
-      width: 44px;
-      height: 44px;
-      border: none;
-      background: transparent;
-      color: var(--fg);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      cursor: pointer;
-    }
-
-    .icon-btn:active {
-      background: var(--border);
-    }
-
-    /* Navigation bottom */
-    .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: var(--bg-card);
-      border-top: 1px solid var(--border);
-      padding: 8px 16px;
-      padding-bottom: max(8px, env(safe-area-inset-bottom));
-      display: flex;
-      justify-content: space-around;
-      z-index: 1000;
-    }
-
-    .nav-tab {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      background: none;
-      border: none;
-      color: var(--muted);
-      padding: 8px 4px;
-      border-radius: 12px;
-      cursor: pointer;
-      font-size: 10px;
-      min-height: 50px;
-      max-width: 80px;
-    }
-
-    .nav-tab.active {
-      color: var(--accent-green);
-    }
-
-    .nav-tab:active {
-      background: var(--border);
-    }
-
-    .tab-icon {
-      font-size: 20px;
-      margin-bottom: 2px;
-    }
-
-    /* Content area */
-    .content {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px;
-      padding-bottom: 80px; /* Espace pour la bottom nav */
-      -webkit-overflow-scrolling: touch;
-    }
-
-    /* Cards */
-    .card {
-      background: var(--bg-card);
-      border-radius: 16px;
-      padding: 20px;
-      margin-bottom: 16px;
-      border: 1px solid var(--border);
-      box-shadow: var(--shadow);
-    }
-
-    /* Quick actions */
-    .quick-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-
-    .quick-action {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 20px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .quick-action:active {
-      transform: scale(0.98);
-      background: var(--border);
-    }
-
-    .action-icon {
-      font-size: 24px;
-      margin-bottom: 8px;
-      display: block;
-    }
-
-    .action-text {
-      font-weight: 600;
-      font-size: 14px;
-    }
-
-    /* Stats grid */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-
-    .stat-card {
-      background: var(--bg-card);
-      border-radius: 12px;
-      padding: 16px;
-      text-align: center;
-      border: 1px solid var(--border);
-    }
-
-    .stat-value {
-      font-size: 20px;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-
-    .stat-label {
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    /* Trades list */
-    .trades-section {
-      margin-top: 20px;
-    }
-
-    .section-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-
-    .section-title {
-      font-weight: 700;
-      font-size: 18px;
-      margin: 0;
-    }
-
-    .see-all {
-      color: var(--accent-green);
-      font-size: 14px;
-      text-decoration: none;
-    }
-
-    .trade-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 16px;
-      border-radius: 12px;
-      margin-bottom: 8px;
-      border-left: 4px solid transparent;
-    }
-
-    .trade-item.win {
-      background: linear-gradient(90deg, rgba(0,196,140,0.1), transparent);
-      border-left-color: var(--accent-green);
-    }
-
-    .trade-item.loss {
-      background: linear-gradient(90deg, rgba(255,92,99,0.1), transparent);
-      border-left-color: var(--accent-red);
-    }
-
-    .trade-info {
-      flex: 1;
-    }
-
-    .trade-symbol {
-      font-weight: 700;
-      font-size: 16px;
-      margin-bottom: 4px;
-    }
-
-    .trade-details {
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    .trade-pnl {
-      text-align: right;
-    }
-
-    .trade-amount {
-      font-weight: 700;
-      font-size: 16px;
-      margin-bottom: 2px;
-    }
-
-    .trade-percent {
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    /* Modal mobile */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: var(--overlay);
-      display: none;
-      align-items: flex-end;
-      justify-content: center;
-      z-index: 2000;
-      backdrop-filter: blur(10px);
-    }
-
-    .modal-content {
-      background: var(--bg-card);
-      border-radius: 24px 24px 0 0;
-      width: 100%;
-      max-height: 85vh;
-      overflow-y: auto;
-      transform: translateY(100%);
-      transition: transform 0.3s ease;
-      padding: 20px;
-      padding-bottom: max(20px, env(safe-area-inset-bottom));
-    }
-
-    .modal-overlay.active .modal-content {
-      transform: translateY(0);
-    }
-
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .modal-title {
-      font-weight: 700;
-      font-size: 20px;
-      margin: 0;
-    }
-
-    /* Form styles */
-    .form-group {
-      margin-bottom: 20px;
-    }
-
-    .form-label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 600;
-      font-size: 14px;
-      color: var(--muted);
-    }
-
-    .form-input {
-      width: 100%;
-      padding: 16px;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      color: var(--fg);
-      font-size: 16px;
-      -webkit-appearance: none;
-    }
-
-    .form-input:focus {
-      outline: none;
-      border-color: var(--accent-green);
-    }
-
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    /* Button styles */
-    .btn {
-      padding: 16px 24px;
-      border-radius: 12px;
-      border: none;
-      font-weight: 600;
-      font-size: 16px;
-      cursor: pointer;
-      text-align: center;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      min-height: 54px;
-      transition: all 0.2s ease;
-    }
-
-    .btn:active {
-      transform: scale(0.98);
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, var(--accent-green), #00E095);
-      color: white;
-    }
-
-    .btn-secondary {
-      background: var(--bg);
-      color: var(--fg);
-      border: 1px solid var(--border);
-    }
-
-    .btn-full {
-      width: 100%;
-    }
-
-    /* Toast system */
-    .toast-container {
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 3000;
-      width: 90%;
-      max-width: 400px;
-    }
-
-    .toast {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      box-shadow: var(--shadow);
-      animation: slideDown 0.3s ease;
-    }
-
-    .toast.success {
-      border-left: 4px solid var(--accent-green);
-    }
-
-    .toast.error {
-      border-left: 4px solid var(--accent-red);
-    }
-
-    .toast.fade-out {
-      animation: slideUp 0.3s ease forwards;
-    }
-
-    @keyframes slideDown {
-      from { transform: translateY(-100%); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-
-    @keyframes slideUp {
-      from { transform: translateY(0); opacity: 1; }
-      to { transform: translateY(-100%); opacity: 0; }
-    }
-
-    /* Chart container */
-    .chart-container {
-      height: 200px;
-      margin: 20px 0;
-      position: relative;
-    }
-
-    /* Heatmap mobile */
-    .heatmap-container {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      margin: 16px 0;
-    }
-
-    .heatmap {
-      display: grid;
-      grid-template-columns: repeat(14, 1fr);
-      gap: 4px;
-      min-width: 500px;
-    }
-
-    .heat-cell {
-      width: 24px;
-      height: 24px;
-      border-radius: 6px;
-      background: var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 10px;
-      font-weight: 600;
-    }
-
-    /* Loading states */
-    .loading {
-      opacity: 0.6;
-      pointer-events: none;
-    }
-
-    .skeleton {
-      background: linear-gradient(90deg, var(--border) 25%, var(--bg) 50%, var(--border) 75%);
-      background-size: 200% 100%;
-      animation: loading 1.5s infinite;
-      border-radius: 8px;
-    }
-
-    @keyframes loading {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
-    }
-
-    /* Utility classes */
-    .text-success { color: var(--accent-green); }
-    .text-danger { color: var(--accent-red); }
-    .text-muted { color: var(--muted); }
-    .text-center { text-align: center; }
-    .mb-16 { margin-bottom: 16px; }
-    .mt-16 { margin-top: 16px; }
-    .hidden { display: none; }
-
-    /* Swipe gestures for modals */
-    .modal-content {
-      touch-action: pan-y;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Journal de Trading</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --black: #000000;
+            --white: #FFFFFF;
+            --gray-50: #F9FAFB;
+            --gray-100: #F3F4F6;
+            --gray-200: #E5E7EB;
+            --gray-300: #D1D5DB;
+            --gray-400: #9CA3AF;
+            --gray-500: #6B7280;
+            --gray-600: #4B5563;
+            --gray-700: #374151;
+            --gray-800: #1F2937;
+            --gray-900: #111827;
+            --green: #00C48C;
+            --red: #FF5C63;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --radius: 8px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--white);
+            color: var(--black);
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+
+        .app {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background-color: var(--white);
+            border-right: 1px solid var(--gray-200);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .brand-logo {
+            font-weight: 700;
+            font-size: 20px;
+            letter-spacing: -0.5px;
+        }
+
+        .nav {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 32px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: var(--radius);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--gray-700);
+            text-decoration: none;
+        }
+
+        .nav-item:hover {
+            background-color: var(--gray-100);
+        }
+
+        .nav-item.active {
+            background-color: var(--black);
+            color: var(--white);
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .user-section {
+            margin-top: auto;
+            padding-top: 24px;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--black);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .user-details {
+            flex: 1;
+        }
+
+        .user-email {
+            font-weight: 500;
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+
+        .user-status {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border-radius: var(--radius);
+            font-weight: 500;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background-color: var(--black);
+            color: var(--white);
+        }
+
+        .btn-secondary {
+            background-color: var(--white);
+            color: var(--black);
+            border: 1px solid var(--gray-300);
+        }
+
+        .btn-full {
+            width: 100%;
+        }
+
+        /* Main Content */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .search-input {
+            padding: 8px 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius);
+            font-size: 14px;
+            width: 200px;
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        /* Dashboard */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background-color: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .stat-value {
+            font-weight: 600;
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--gray-500);
+        }
+
+        .card {
+            background-color: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .chart-container {
+            height: 200px;
+            position: relative;
+        }
+
+        .trades-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .trade-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-radius: var(--radius);
+            border: 1px solid var(--gray-200);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .trade-item:hover {
+            background-color: var(--gray-50);
+        }
+
+        .trade-item.win {
+            border-left: 4px solid var(--green);
+        }
+
+        .trade-item.loss {
+            border-left: 4px solid var(--red);
+        }
+
+        .trade-info {
+            flex: 1;
+        }
+
+        .trade-symbol {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .trade-details {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        .trade-pnl {
+            text-align: right;
+        }
+
+        .trade-amount {
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .trade-percent {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        .text-success {
+            color: var(--green);
+        }
+
+        .text-danger {
+            color: var(--red);
+        }
+
+        /* Heatmap */
+        .heatmap-container {
+            overflow-x: auto;
+        }
+
+        .heatmap {
+            display: grid;
+            grid-template-columns: repeat(14, 1fr);
+            gap: 4px;
+            min-width: 500px;
+        }
+
+        .heat-cell {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            background-color: var(--gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius);
+            font-size: 14px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background-color: var(--white);
+            border-radius: var(--radius);
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .modal-title {
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--gray-500);
+        }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1100;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            padding: 12px 16px;
+            border-radius: var(--radius);
+            background-color: var(--white);
+            border: 1px solid var(--gray-200);
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideInRight 0.3s ease;
+        }
+
+        .toast.success {
+            border-left: 4px solid var(--green);
+        }
+
+        .toast.error {
+            border-left: 4px solid var(--red);
+        }
+
+        .toast.fade-out {
+            animation: slideOutRight 0.3s ease forwards;
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+
+        /* Mobile Styles */
+        .mobile-header {
+            display: none;
+            padding: 16px;
+            border-bottom: 1px solid var(--gray-200);
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .mobile-menu-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--white);
+            border-top: 1px solid var(--gray-200);
+            padding: 8px 16px;
+            justify-content: space-around;
+            z-index: 100;
+        }
+
+        .nav-tab {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            background: none;
+            border: none;
+            color: var(--gray-500);
+            padding: 8px 4px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 10px;
+            max-width: 80px;
+        }
+
+        .nav-tab.active {
+            color: var(--black);
+        }
+
+        .tab-icon {
+            font-size: 20px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .app {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                position: fixed;
+                left: -100%;
+                top: 0;
+                height: 100vh;
+                z-index: 100;
+                width: 280px;
+                background-color: var(--white);
+            }
+
+            .sidebar.active {
+                left: 0;
+            }
+
+            .mobile-header {
+                display: flex;
+            }
+
+            .header {
+                display: none;
+            }
+
+            .bottom-nav {
+                display: flex;
+            }
+
+            .content {
+                padding-bottom: 80px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .search-input {
+                width: 100%;
+            }
+        }
+
+        /* Utility Classes */
+        .hidden {
+            display: none !important;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-muted {
+            color: var(--gray-500);
+        }
+
+        .mb-16 {
+            margin-bottom: 16px;
+        }
+
+        .mt-16 {
+            margin-top: 16px;
+        }
+    </style>
 </head>
 <body>
-  <!-- Toast Container -->
-  <div class="toast-container" id="toastContainer"></div>
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
 
-  <!-- Main App -->
-  <div class="app">
-    <!-- Header -->
-    <header class="mobile-header">
-      <h1 class="header-title" id="pageTitle">Tableau de bord</h1>
-      <div class="header-actions">
-        <button class="icon-btn" id="themeToggle">🌓</button>
-        <button class="icon-btn" id="syncButton">⚡</button>
-      </div>
-    </header>
-
-    <!-- Main Content -->
-    <main class="content" id="mainContent">
-      <!-- Dashboard View -->
-      <div class="view" id="dashboardView">
-        <!-- Quick Actions -->
-        <div class="quick-actions">
-          <div class="quick-action" id="quickTrade">
-            <span class="action-icon">📈</span>
-            <span class="action-text">Nouveau Trade</span>
-          </div>
-          <div class="quick-action" id="quickImport">
-            <span class="action-icon">📥</span>
-            <span class="action-text">Importer CSV</span>
-          </div>
+    <div class="app">
+        <!-- Mobile Header -->
+        <div class="mobile-header">
+            <button class="mobile-menu-btn" id="mobileMenuBtn">☰</button>
+            <div class="header-title" id="mobilePageTitle">Tableau de bord</div>
+            <button class="btn btn-primary" id="mobileNewTrade">+ Trade</button>
         </div>
 
-        <!-- Stats Overview -->
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-value" id="currentCapital">-- €</div>
-            <div class="stat-label">Capital</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" id="winRate">0%</div>
-            <div class="stat-label">Win Rate</div>
-          </div>
-        </div>
-
-        <!-- Equity Chart -->
-        <div class="card">
-          <div class="section-header">
-            <h3 class="section-title">Performance</h3>
-          </div>
-          <div class="chart-container">
-            <canvas id="equityChart"></canvas>
-          </div>
-        </div>
-
-        <!-- Recent Trades -->
-        <div class="trades-section">
-          <div class="section-header">
-            <h3 class="section-title">Trades récents</h3>
-            <a href="#" class="see-all" data-view="trades">Tout voir</a>
-          </div>
-          <div id="recentTradesList">
-            <!-- Trades will be loaded here -->
-          </div>
-        </div>
-      </div>
-
-      <!-- Trades View -->
-      <div class="view hidden" id="tradesView">
-        <div class="card">
-          <div class="section-header">
-            <h3 class="section-title">Tous les trades</h3>
-            <button class="icon-btn" id="filterButton">🔍</button>
-          </div>
-          <div id="allTradesList">
-            <!-- All trades will be loaded here -->
-          </div>
-        </div>
-      </div>
-
-      <!-- Analytics View -->
-      <div class="view hidden" id="analyticsView">
-        <div class="card">
-          <h3 class="section-title mb-16">Analytics</h3>
-          <div class="stats-grid">
-            <div class="stat-card">
-              <div class="stat-value" id="profitFactor">--</div>
-              <div class="stat-label">Profit Factor</div>
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="brand">
+                <div class="brand-logo">TRADING JOURNAL</div>
             </div>
-            <div class="stat-card">
-              <div class="stat-value" id="expectancy">-- €</div>
-              <div class="stat-label">Expectancy</div>
+
+            <nav class="nav">
+                <a class="nav-item active" data-view="dashboard">
+                    <div class="nav-icon">📊</div>
+                    <span>Tableau de bord</span>
+                </a>
+                <a class="nav-item" data-view="trades">
+                    <div class="nav-icon">📈</div>
+                    <span>Trades</span>
+                </a>
+                <a class="nav-item" data-view="analytics">
+                    <div class="nav-icon">📉</div>
+                    <span>Analytics</span>
+                </a>
+                <a class="nav-item" data-view="settings">
+                    <div class="nav-icon">⚙️</div>
+                    <span>Paramètres</span>
+                </a>
+            </nav>
+
+            <div class="user-section">
+                <div class="user-info hidden" id="userInfo">
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <div class="user-details">
+                        <div class="user-email" id="userEmail">utilisateur@email.com</div>
+                        <div class="user-status" id="userStatus">Connecté</div>
+                    </div>
+                </div>
+
+                <div id="authSection">
+                    <p class="text-muted text-center mb-16">Connectez-vous pour synchroniser</p>
+                    <div class="auth-buttons">
+                        <button class="btn btn-primary btn-full" id="loginButton">Connexion</button>
+                        <button class="btn btn-secondary btn-full" id="signupButton">Inscription</button>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary btn-full mt-16" id="btnNewTrade">+ Nouveau trade</button>
             </div>
-            <div class="stat-card">
-              <div class="stat-value" id="bestTrade">-- €</div>
-              <div class="stat-label">Meilleur</div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Desktop Header -->
+            <header class="header">
+                <h1 class="header-title" id="pageTitle">Tableau de bord</h1>
+                <div class="header-actions">
+                    <input type="text" class="search-input" placeholder="Rechercher..." id="searchInput">
+                    <button class="btn btn-primary" id="openNewTrade">+ Nouveau trade</button>
+                </div>
+            </header>
+
+            <!-- Content -->
+            <div class="content" id="mainContent">
+                <!-- Dashboard View -->
+                <div class="view" id="dashboardView">
+                    <!-- Stats Overview -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="currentCapital">-- €</div>
+                            <div class="stat-label">Capital</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="winRate">0%</div>
+                            <div class="stat-label">Win Rate</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="profitFactor">--</div>
+                            <div class="stat-label">Profit Factor</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalTrades">0</div>
+                            <div class="stat-label">Total Trades</div>
+                        </div>
+                    </div>
+
+                    <!-- Equity Chart -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Performance</div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="equityChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Recent Trades -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Trades récents</div>
+                            <a href="#" class="text-muted" data-view="trades">Tout voir</a>
+                        </div>
+                        <div class="trades-list" id="recentTradesList">
+                            <!-- Trades will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Heatmap -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Heatmap 30j</div>
+                        </div>
+                        <div class="heatmap-container">
+                            <div class="heatmap" id="heatmap"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trades View -->
+                <div class="view hidden" id="tradesView">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Tous les trades</div>
+                            <div>
+                                <button class="btn btn-secondary" id="exportCSV">Exporter CSV</button>
+                                <button class="btn btn-secondary" id="importCSV">Importer CSV</button>
+                            </div>
+                        </div>
+                        <div class="trades-list" id="allTradesList">
+                            <!-- All trades will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analytics View -->
+                <div class="view hidden" id="analyticsView">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Analytics</div>
+                        </div>
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value" id="analyticsProfitFactor">--</div>
+                                <div class="stat-label">Profit Factor</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="expectancy">-- €</div>
+                                <div class="stat-label">Expectancy</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value text-success" id="bestTrade">-- €</div>
+                                <div class="stat-label">Meilleur</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value text-danger" id="worstTrade">-- €</div>
+                                <div class="stat-label">Pire</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Performance par symbole</div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="symbolChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings View -->
+                <div class="view hidden" id="settingsView">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Paramètres</div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Capital initial</label>
+                            <input type="number" class="form-input" id="initialCapital" placeholder="10000">
+                        </div>
+                        <button class="btn btn-primary btn-full" id="saveCapitalSettings">
+                            Sauvegarder le capital
+                        </button>
+                        
+                        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--gray-200);">
+                            <button class="btn btn-secondary btn-full" id="exportData">
+                                Exporter toutes les données
+                            </button>
+                            <button class="btn btn-secondary btn-full mt-16" id="resetData" style="background-color: var(--red); color: var(--white);">
+                                Réinitialiser toutes les données
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="stat-card">
-              <div class="stat-value text-danger" id="worstTrade">-- €</div>
-              <div class="stat-label">Pire</div>
-            </div>
-          </div>
-        </div>
 
-        <div class="card">
-          <h3 class="section-title mb-16">Heatmap 30j</h3>
-          <div class="heatmap-container">
-            <div class="heatmap" id="heatmap"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Settings View -->
-      <div class="view hidden" id="settingsView">
-        <div class="card">
-          <h3 class="section-title mb-16">Paramètres</h3>
-          <div class="form-group">
-            <label class="form-label">Capital initial</label>
-            <input type="number" class="form-input" id="initialCapital" placeholder="10000">
-          </div>
-          <button class="btn btn-primary btn-full" id="saveCapitalSettings">
-            💾 Sauvegarder le capital
-          </button>
-        </div>
-      </div>
-    </main>
-
-    <!-- Bottom Navigation -->
-    <nav class="bottom-nav">
-      <button class="nav-tab active" data-view="dashboard">
-        <span class="tab-icon">📊</span>
-        <span>Dashboard</span>
-      </button>
-      <button class="nav-tab" data-view="trades">
-        <span class="tab-icon">📈</span>
-        <span>Trades</span>
-      </button>
-      <button class="nav-tab" data-view="analytics">
-        <span class="tab-icon">📉</span>
-        <span>Analytics</span>
-      </button>
-      <button class="nav-tab" data-view="settings">
-        <span class="tab-icon">⚙️</span>
-        <span>Settings</span>
-      </button>
-    </nav>
-  </div>
-
-  <!-- New Trade Modal -->
-  <div class="modal-overlay" id="tradeModal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2 class="modal-title">Nouveau Trade</h2>
-        <button class="icon-btn" id="closeTradeModal">✕</button>
-      </div>
-      
-      <form id="tradeForm">
-        <div class="form-group">
-          <label class="form-label">Symbole</label>
-          <input type="text" class="form-input" name="symbol" placeholder="BTC, ETH..." required>
-        </div>
-
-        <div class="form-grid">
-          <div class="form-group">
-            <label class="form-label">Side</label>
-            <select class="form-input" name="side">
-              <option value="long">Long</option>
-              <option value="short">Short</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Size</label>
-            <input type="number" class="form-input" name="size" step="0.001" placeholder="1.0" required>
-          </div>
-        </div>
-
-        <div class="form-grid">
-          <div class="form-group">
-            <label class="form-label">Entry Price</label>
-            <input type="number" class="form-input" name="entry_price" step="0.01" placeholder="0.00" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Exit Price</label>
-            <input type="number" class="form-input" name="exit_price" step="0.01" placeholder="Laissez vide si ouvert">
-          </div>
-        </div>
-
-        <div class="form-grid">
-          <div class="form-group">
-            <label class="form-label">Frais</label>
-            <input type="number" class="form-input" name="fees" step="0.01" value="0">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Taxes</label>
-            <input type="number" class="form-input" name="taxes" step="0.01" value="0">
-          </div>
-        </div>
-
-        <button type="submit" class="btn btn-primary btn-full">
-          💾 Enregistrer le Trade
-        </button>
-      </form>
+            <!-- Bottom Navigation - Mobile -->
+            <nav class="bottom-nav">
+                <button class="nav-tab active" data-view="dashboard">
+                    <span class="tab-icon">📊</span>
+                    <span>Dashboard</span>
+                </button>
+                <button class="nav-tab" data-view="trades">
+                    <span class="tab-icon">📈</span>
+                    <span>Trades</span>
+                </button>
+                <button class="nav-tab" data-view="analytics">
+                    <span class="tab-icon">📉</span>
+                    <span>Analytics</span>
+                </button>
+                <button class="nav-tab" data-view="settings">
+                    <span class="tab-icon">⚙️</span>
+                    <span>Settings</span>
+                </button>
+            </nav>
+        </main>
     </div>
-  </div>
 
-  <!-- CSV Import Modal -->
-  <div class="modal-overlay" id="importModal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2 class="modal-title">Importer CSV</h2>
-        <button class="icon-btn" id="closeImportModal">✕</button>
-      </div>
+    <!-- Auth Modal -->
+    <div class="modal-overlay" id="authModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="authModalTitle">Connexion</h2>
+                <button class="modal-close" id="closeAuthModal">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="auth-tabs" style="display: flex; margin-bottom: 20px; border-bottom: 1px solid var(--gray-200);">
+                    <button class="auth-tab active" data-tab="login" style="flex: 1; padding: 12px; text-align: center; border-bottom: 2px solid var(--black); background: none; color: var(--black); font-weight: 500;">Connexion</button>
+                    <button class="auth-tab" data-tab="signup" style="flex: 1; padding: 12px; text-align: center; border-bottom: 2px solid transparent; background: none; color: var(--gray-500);">Inscription</button>
+                </div>
+                
+                <form id="authForm">
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" id="authEmail" required>
+                    </div>
 
-      <div class="form-group">
-        <label class="form-label">Fichier CSV</label>
-        <input type="file" class="form-input" id="csvFile" accept=".csv">
-      </div>
+                    <div class="form-group">
+                        <label class="form-label">Mot de passe</label>
+                        <input type="password" class="form-input" id="authPassword" required minlength="6">
+                    </div>
 
-      <button class="btn btn-primary btn-full mt-16" id="processCSV">
-        📥 Importer
-      </button>
+                    <div class="form-group hidden" id="confirmPasswordGroup">
+                        <label class="form-label">Confirmer le mot de passe</label>
+                        <input type="password" class="form-input" id="confirmPassword" minlength="6">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-full" id="authSubmit">
+                        Se connecter
+                    </button>
+                </form>
+
+                <div id="authMessage" style="margin-top: 16px; text-align: center; font-size: 14px;"></div>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <script>
-    // ========== CONFIGURATION SUPABASE ==========
-    const SUPABASE_URL = 'https://jbdtjiffupkqxomktzyd.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpiZHRqaWZmdXBrcXhvbWt0enlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEwNDAzMzUsImV4cCI6MjA3NjYxNjMzNX0.ZkZq-_246t2hzsQre4XN5EOak0Ey2JmSDyU2_ElNacc';
-    
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    
-    // ========== ÉTAT DE L'APPLICATION ==========
-    let trades = [];
-    let capital = 10000;
-    let currentUser = null;
-    let equityChart = null;
-
-    // ========== SYSTÈME DE TOAST ==========
-    function showToast(message, type = 'info', duration = 4000) {
-      const container = document.getElementById('toastContainer');
-      const toast = document.createElement('div');
-      toast.className = `toast ${type}`;
-      
-      const icons = {
-        success: '✅',
-        error: '❌',
-        warning: '⚠️',
-        info: '💡'
-      };
-      
-      toast.innerHTML = `
-        <div>${icons[type] || icons.info}</div>
-        <div style="flex: 1;">${message}</div>
-      `;
-      
-      container.appendChild(toast);
-      
-      setTimeout(() => {
-        toast.classList.add('fade-out');
-        setTimeout(() => toast.remove(), 300);
-      }, duration);
-    }
-
-    // ========== GESTION DU THÈME ==========
-    function initTheme() {
-      const savedTheme = localStorage.getItem('theme') || 'dark';
-      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      
-      let theme = savedTheme;
-      if (savedTheme === 'auto') {
-        theme = systemPrefersDark ? 'dark' : 'light';
-      }
-      
-      document.documentElement.setAttribute('data-theme', theme);
-      
-      const themeIcon = document.getElementById('themeToggle');
-      themeIcon.textContent = theme === 'dark' ? '🌙' : '☀️';
-    }
-
-    function toggleTheme() {
-      const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      
-      document.documentElement.setAttribute('data-theme', newTheme);
-      localStorage.setItem('theme', newTheme);
-      
-      const themeIcon = document.getElementById('themeToggle');
-      themeIcon.textContent = newTheme === 'dark' ? '🌙' : '☀️';
-      
-      // Re-init charts with new theme
-      if (equityChart) {
-        equityChart.destroy();
-        initChart();
-        updateChart();
-      }
-    }
-
-    // ========== GESTION DES MODALES ==========
-    function openModal(modalId) {
-      const modal = document.getElementById(modalId);
-      modal.style.display = 'flex';
-      setTimeout(() => modal.classList.add('active'), 10);
-      document.body.style.overflow = 'hidden';
-    }
-
-    function closeModal(modalId) {
-      const modal = document.getElementById(modalId);
-      modal.classList.remove('active');
-      setTimeout(() => {
-        modal.style.display = 'none';
-        document.body.style.overflow = 'auto';
-      }, 300);
-    }
-
-    // ========== NAVIGATION ==========
-    function showView(viewName) {
-      // Hide all views
-      document.querySelectorAll('.view').forEach(view => {
-        view.classList.add('hidden');
-      });
-      
-      // Show target view
-      document.getElementById(viewName + 'View').classList.remove('hidden');
-      
-      // Update page title
-      const titles = {
-        dashboard: 'Tableau de bord',
-        trades: 'Trades',
-        analytics: 'Analytics',
-        settings: 'Paramètres'
-      };
-      document.getElementById('pageTitle').textContent = titles[viewName];
-      
-      // Update active tab
-      document.querySelectorAll('.nav-tab').forEach(tab => {
-        tab.classList.remove('active');
-      });
-      document.querySelector(`[data-view="${viewName}"]`).classList.add('active');
-      
-      // Update analytics if needed
-      if (viewName === 'analytics') {
-        updateAnalytics();
-        renderHeatmap();
-      }
-    }
-
-    // ========== GESTION DES DONNÉES ==========
-    function loadTrades() {
-      const stored = localStorage.getItem('mobile_trades');
-      trades = stored ? JSON.parse(stored) : [];
-      renderTrades();
-      updateDashboard();
-    }
-
-    function saveTrades() {
-      localStorage.setItem('mobile_trades', JSON.stringify(trades));
-    }
-
-    function computePnL(trade) {
-      if (!trade.exit_price) return null;
-      
-      let pnl;
-      if (trade.side === 'long') {
-        pnl = (trade.exit_price - trade.entry_price) * trade.size - (trade.fees || 0) - (trade.taxes || 0);
-      } else {
-        pnl = (trade.entry_price - trade.exit_price) * trade.size - (trade.fees || 0) - (trade.taxes || 0);
-      }
-      
-      return parseFloat(pnl.toFixed(2));
-    }
-
-    // ========== RENDU DES TRADES ==========
-    function renderTrades() {
-      const recentList = document.getElementById('recentTradesList');
-      const allList = document.getElementById('allTradesList');
-      
-      const recentTrades = trades.slice(0, 5);
-      const allTrades = trades;
-      
-      // Recent trades
-      if (recentTrades.length === 0) {
-        recentList.innerHTML = '<div class="text-center text-muted">Aucun trade enregistré</div>';
-      } else {
-        recentList.innerHTML = recentTrades.map(trade => `
-          <div class="trade-item ${trade.pnl >= 0 ? 'win' : 'loss'}">
-            <div class="trade-info">
-              <div class="trade-symbol">${trade.symbol}</div>
-              <div class="trade-details">${trade.side} • ${trade.size} @ ${trade.entry_price}</div>
+    <!-- New Trade Modal -->
+    <div class="modal-overlay" id="tradeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Nouveau Trade</h2>
+                <button class="modal-close" id="closeTradeModal">✕</button>
             </div>
-            <div class="trade-pnl">
-              <div class="trade-amount ${trade.pnl >= 0 ? 'text-success' : 'text-danger'}">
-                ${trade.pnl ? (trade.pnl >= 0 ? '+' : '') + trade.pnl + ' €' : 'OUVERT'}
-              </div>
-              <div class="trade-percent">
-                ${trade.pnl ? ((trade.pnl / (trade.entry_price * trade.size)) * 100).toFixed(2) + '%' : '—'}
-              </div>
+            <div class="modal-body">
+                <form id="tradeForm">
+                    <div class="form-group">
+                        <label class="form-label">Symbole</label>
+                        <input type="text" class="form-input" name="symbol" placeholder="BTC, ETH..." required>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Side</label>
+                            <select class="form-input" name="side">
+                                <option value="long">Long</option>
+                                <option value="short">Short</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Size</label>
+                            <input type="number" class="form-input" name="size" step="0.001" placeholder="1.0" required>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Entry Price</label>
+                            <input type="number" class="form-input" name="entry_price" step="0.01" placeholder="0.00" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Exit Price</label>
+                            <input type="number" class="form-input" name="exit_price" step="0.01" placeholder="Laissez vide si ouvert">
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Frais</label>
+                            <input type="number" class="form-input" name="fees" step="0.01" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Taxes</label>
+                            <input type="number" class="form-input" name="taxes" step="0.01" value="0">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-full">
+                        Enregistrer le Trade
+                    </button>
+                </form>
             </div>
-          </div>
-        `).join('');
-      }
-      
-      // All trades
-      if (allTrades.length === 0) {
-        allList.innerHTML = '<div class="text-center text-muted">Aucun trade enregistré</div>';
-      } else {
-        allList.innerHTML = allTrades.map(trade => `
-          <div class="trade-item ${trade.pnl >= 0 ? 'win' : 'loss'}">
-            <div class="trade-info">
-              <div class="trade-symbol">${trade.symbol}</div>
-              <div class="trade-details">${trade.side} • ${trade.size} @ ${trade.entry_price}</div>
+        </div>
+    </div>
+
+    <!-- CSV Import Modal -->
+    <div class="modal-overlay" id="importModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Importer CSV</h2>
+                <button class="modal-close" id="closeImportModal">✕</button>
             </div>
-            <div class="trade-pnl">
-              <div class="trade-amount ${trade.pnl >= 0 ? 'text-success' : 'text-danger'}">
-                ${trade.pnl ? (trade.pnl >= 0 ? '+' : '') + trade.pnl + ' €' : 'OUVERT'}
-              </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Fichier CSV</label>
+                    <input type="file" class="form-input" id="csvFile" accept=".csv">
+                </div>
+
+                <button class="btn btn-primary btn-full mt-16" id="processCSV">
+                    Importer
+                </button>
             </div>
-          </div>
-        `).join('');
-      }
-    }
+        </div>
+    </div>
 
-    // ========== MISE À JOUR DU DASHBOARD ==========
-    function updateDashboard() {
-      const closedTrades = trades.filter(t => t.pnl !== null);
-      const winningTrades = closedTrades.filter(t => t.pnl > 0);
-      const winRate = closedTrades.length > 0 ? Math.round((winningTrades.length / closedTrades.length) * 100) : 0;
-      
-      const totalPnL = closedTrades.reduce((sum, t) => sum + t.pnl, 0);
-      const currentCapitalValue = capital + totalPnL;
-      
-      document.getElementById('currentCapital').textContent = currentCapitalValue.toFixed(2) + ' €';
-      document.getElementById('winRate').textContent = winRate + '%';
-    }
+    <script>
+        // Configuration Supabase
+        const SUPABASE_URL = 'https://jbdtjiffupkqxomktzyd.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpiZHRqaWZmdXBrcXhvbWt0enlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEwNDAzMzUsImV4cCI6MjA3NjYxNjMzNX0.ZkZq-_246t2hzsQre4XN5EOak0Ey2JmSDyU2_ElNacc';
+        
+        // Initialisation Supabase
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // État de l'application
+        let trades = [];
+        let capital = 10000;
+        let currentUser = null;
+        let equityChart = null;
+        let symbolChart = null;
 
-    function updateAnalytics() {
-      const closedTrades = trades.filter(t => t.pnl !== null);
-      
-      if (closedTrades.length === 0) {
-        document.getElementById('profitFactor').textContent = '--';
-        document.getElementById('expectancy').textContent = '-- €';
-        document.getElementById('bestTrade').textContent = '-- €';
-        document.getElementById('worstTrade').textContent = '-- €';
-        return;
-      }
-      
-      const totalWins = closedTrades.filter(t => t.pnl > 0).reduce((sum, t) => sum + t.pnl, 0);
-      const totalLosses = Math.abs(closedTrades.filter(t => t.pnl < 0).reduce((sum, t) => sum + t.pnl, 0));
-      const profitFactor = totalLosses > 0 ? (totalWins / totalLosses).toFixed(2) : '∞';
-      
-      const avgPnL = closedTrades.reduce((sum, t) => sum + t.pnl, 0) / closedTrades.length;
-      
-      const bestTrade = Math.max(...closedTrades.map(t => t.pnl));
-      const worstTrade = Math.min(...closedTrades.map(t => t.pnl));
-      
-      document.getElementById('profitFactor').textContent = profitFactor;
-      document.getElementById('expectancy').textContent = avgPnL.toFixed(2) + ' €';
-      document.getElementById('bestTrade').textContent = '+' + bestTrade.toFixed(2) + ' €';
-      document.getElementById('worstTrade').textContent = worstTrade.toFixed(2) + ' €';
-    }
-
-    // ========== GRAPHIQUE ==========
-    function initChart() {
-      const ctx = document.getElementById('equityChart');
-      if (!ctx) return;
-      
-      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-      
-      equityChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: [],
-          datasets: [{
-            label: 'Capital',
-            data: [],
-            borderColor: '#00C48C',
-            backgroundColor: 'rgba(0, 196, 140, 0.1)',
-            borderWidth: 3,
-            fill: true,
-            tension: 0.4
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: false
-            }
-          },
-          scales: {
-            x: {
-              display: false
-            },
-            y: {
-              display: true,
-              grid: {
-                color: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
-              },
-              ticks: {
-                color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)'
-              }
-            }
-          }
-        }
-      });
-    }
-
-    function updateChart() {
-      if (!equityChart) return;
-      
-      const closedTrades = trades.filter(t => t.pnl !== null);
-      let currentCapital = capital;
-      const data = [currentCapital];
-      
-      closedTrades.forEach(trade => {
-        currentCapital += trade.pnl;
-        data.push(currentCapital);
-      });
-      
-      equityChart.data.datasets[0].data = data;
-      equityChart.data.labels = Array(data.length).fill('');
-      equityChart.update();
-    }
-
-    // ========== HEATMAP ==========
-    function renderHeatmap() {
-      const container = document.getElementById('heatmap');
-      if (!container) return;
-      
-      container.innerHTML = '';
-      const days = 30;
-      const now = new Date();
-      
-      for (let i = days - 1; i >= 0; i--) {
-        const day = new Date(now);
-        day.setDate(now.getDate() - i);
-        
-        const dayTrades = trades.filter(t => {
-          if (!t.exit_timestamp) return false;
-          const tradeDate = new Date(t.exit_timestamp);
-          return tradeDate.toDateString() === day.toDateString();
-        });
-        
-        const dayPnL = dayTrades.reduce((sum, t) => sum + (t.pnl || 0), 0);
-        
-        const cell = document.createElement('div');
-        cell.className = 'heat-cell';
-        cell.title = `${day.toLocaleDateString()}: ${dayPnL.toFixed(2)} €`;
-        
-        if (dayPnL > 0) {
-          const intensity = Math.min(dayPnL / 100, 1);
-          cell.style.background = `rgba(0, 196, 140, ${0.3 + intensity * 0.7})`;
-        } else if (dayPnL < 0) {
-          const intensity = Math.min(Math.abs(dayPnL) / 100, 1);
-          cell.style.background = `rgba(255, 92, 99, ${0.3 + intensity * 0.7})`;
-        }
-        
-        if (Math.abs(dayPnL) > 10) {
-          cell.textContent = Math.abs(Math.round(dayPnL));
-        }
-        
-        container.appendChild(cell);
-      }
-    }
-
-    // ========== GESTION DES ÉVÉNEMENTS ==========
-    document.addEventListener('DOMContentLoaded', function() {
-      // Initialisation
-      initTheme();
-      loadTrades();
-      initChart();
-      updateChart();
-      renderHeatmap();
-      
-      // Load capital from localStorage
-      const savedCapital = localStorage.getItem('capital');
-      if (savedCapital) {
-        capital = parseFloat(savedCapital);
-        document.getElementById('initialCapital').value = capital;
-      }
-      
-      // Navigation
-      document.querySelectorAll('.nav-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-          const view = tab.getAttribute('data-view');
-          showView(view);
-        });
-      });
-      
-      document.querySelectorAll('.see-all').forEach(link => {
-        link.addEventListener('click', (e) => {
-          e.preventDefault();
-          const view = link.getAttribute('data-view');
-          showView(view);
-        });
-      });
-      
-      // Quick actions
-      document.getElementById('quickTrade').addEventListener('click', () => {
-        openModal('tradeModal');
-      });
-      
-      document.getElementById('quickImport').addEventListener('click', () => {
-        openModal('importModal');
-      });
-      
-      // Theme toggle
-      document.getElementById('themeToggle').addEventListener('click', toggleTheme);
-      
-      // Sync button
-      document.getElementById('syncButton').addEventListener('click', () => {
-        showToast('Synchronisation en cours...', 'info');
-        // Implémentez la synchronisation ici si nécessaire
-      });
-      
-      // Trade form
-      document.getElementById('tradeForm').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        const trade = {
-          id: 't_' + Math.random().toString(36).substr(2, 9),
-          symbol: formData.get('symbol').toUpperCase(),
-          side: formData.get('side'),
-          size: parseFloat(formData.get('size')),
-          entry_price: parseFloat(formData.get('entry_price')),
-          exit_price: formData.get('exit_price') ? parseFloat(formData.get('exit_price')) : null,
-          fees: parseFloat(formData.get('fees')) || 0,
-          taxes: parseFloat(formData.get('taxes')) || 0,
-          timestamp: new Date().toISOString()
-        };
-        
-        trade.pnl = computePnL(trade);
-        trades.unshift(trade);
-        saveTrades();
-        renderTrades();
-        updateDashboard();
-        updateChart();
-        renderHeatmap();
-        
-        closeModal('tradeModal');
-        showToast('Trade enregistré avec succès!', 'success');
-        e.target.reset();
-      });
-      
-      // Save capital
-      document.getElementById('saveCapitalSettings').addEventListener('click', () => {
-        const newCapital = parseFloat(document.getElementById('initialCapital').value);
-        
-        if (!isNaN(newCapital) && newCapital > 0) {
-          capital = newCapital;
-          localStorage.setItem('capital', capital.toString());
-          updateDashboard();
-          updateChart();
-          showToast('Capital sauvegardé', 'success');
-        } else {
-          showToast('Veuillez entrer un capital valide', 'error');
-        }
-      });
-      
-      // CSV Import
-      document.getElementById('processCSV').addEventListener('click', () => {
-        const fileInput = document.getElementById('csvFile');
-        const file = fileInput.files[0];
-        
-        if (!file) {
-          showToast('Veuillez sélectionner un fichier', 'error');
-          return;
-        }
-        
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          try {
-            const csv = e.target.result;
-            const lines = csv.split('\n');
-            const headers = lines[0].split(',').map(h => h.trim());
+        // Système de Toast
+        function showToast(message, type = 'info', duration = 4000) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
             
-            let imported = 0;
-            for (let i = 1; i < lines.length; i++) {
-              if (!lines[i].trim()) continue;
-              
-              const values = lines[i].split(',').map(v => v.trim());
-              const trade = {};
-              
-              headers.forEach((header, index) => {
-                trade[header] = values[index];
-              });
-              
-              // Convert numeric values
-              trade.size = parseFloat(trade.size);
-              trade.entry_price = parseFloat(trade.entry_price);
-              trade.exit_price = trade.exit_price ? parseFloat(trade.exit_price) : null;
-              trade.fees = parseFloat(trade.fees) || 0;
-              trade.taxes = parseFloat(trade.taxes) || 0;
-              trade.pnl = computePnL(trade);
-              
-              if (!trade.id) {
-                trade.id = 't_' + Math.random().toString(36).substr(2, 9);
-              }
-              
-              trades.push(trade);
-              imported++;
+            const icons = {
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                info: '💡'
+            };
+            
+            toast.innerHTML = `
+                <div>${icons[type] || icons.info}</div>
+                <div style="flex: 1;">${message}</div>
+            `;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('fade-out');
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+            
+            return toast;
+        }
+
+        // Gestion de l'authentification Supabase
+        async function checkAuth() {
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
+                if (error) throw error;
+                
+                if (session) {
+                    currentUser = session.user;
+                    updateUIForUser();
+                    await loadTradesFromCloud();
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                console.error('Erreur vérification auth:', error);
+                return false;
+            }
+        }
+
+        async function signUp(email, password) {
+            try {
+                const { data, error } = await supabase.auth.signUp({
+                    email,
+                    password,
+                });
+                
+                if (error) throw error;
+                return { success: true, data };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function signIn(email, password) {
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email,
+                    password,
+                });
+                
+                if (error) throw error;
+                return { success: true, data };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function signOut() {
+            try {
+                const { error } = await supabase.auth.signOut();
+                if (error) throw error;
+                
+                currentUser = null;
+                updateUIForUser();
+                showToast('Déconnexion réussie', 'success');
+            } catch (error) {
+                console.error('Erreur déconnexion:', error);
+                showToast('Erreur lors de la déconnexion', 'error');
+            }
+        }
+
+        async function loadTradesFromCloud() {
+            if (!currentUser) return false;
+            
+            try {
+                const { data: cloudTrades, error } = await supabase
+                    .from('trades')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .order('created_at', { ascending: false });
+                    
+                if (error) throw error;
+                
+                if (cloudTrades && cloudTrades.length > 0) {
+                    trades = cloudTrades.map(trade => ({
+                        ...trade,
+                        pnl: computePnL(trade)
+                    }));
+                    
+                    saveTradesLocal();
+                    renderTrades();
+                    updateDashboard();
+                    updateChart();
+                    renderHeatmap();
+                    
+                    showToast(`${cloudTrades.length} trades chargés depuis le cloud`, 'success');
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                console.error('Erreur chargement cloud:', error);
+                showToast('Erreur chargement cloud', 'error');
+                return false;
+            }
+        }
+
+        async function syncTradesToCloud() {
+            if (!currentUser) return false;
+            
+            try {
+                const tradesWithUserId = trades.map(trade => ({
+                    ...trade,
+                    user_id: currentUser.id,
+                    updated_at: new Date().toISOString()
+                }));
+                
+                const { data, error } = await supabase
+                    .from('trades')
+                    .upsert(tradesWithUserId, { onConflict: 'id' });
+                    
+                if (error) throw error;
+                
+                showToast(`${trades.length} trades synchronisés`, 'success');
+                return true;
+            } catch (error) {
+                console.error('Erreur synchronisation:', error);
+                showToast('Erreur synchronisation', 'error');
+                return false;
+            }
+        }
+
+        // Gestion de l'interface utilisateur
+        function updateUIForUser() {
+            const userInfo = document.getElementById('userInfo');
+            const authSection = document.getElementById('authSection');
+            
+            if (currentUser) {
+                userInfo.classList.remove('hidden');
+                authSection.classList.add('hidden');
+                
+                document.getElementById('userEmail').textContent = currentUser.email;
+                document.getElementById('userAvatar').textContent = currentUser.email[0].toUpperCase();
+            } else {
+                userInfo.classList.add('hidden');
+                authSection.classList.remove('hidden');
+            }
+        }
+
+        // Gestion des modales
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        // Navigation
+        function showView(viewName) {
+            document.querySelectorAll('.view').forEach(view => {
+                view.classList.add('hidden');
+            });
+            
+            document.getElementById(viewName + 'View').classList.remove('hidden');
+            
+            const titles = {
+                dashboard: 'Tableau de bord',
+                trades: 'Trades',
+                analytics: 'Analytics',
+                settings: 'Paramètres'
+            };
+            document.getElementById('pageTitle').textContent = titles[viewName];
+            document.getElementById('mobilePageTitle').textContent = titles[viewName];
+            
+            // Mise à jour navigation desktop
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`.nav-item[data-view="${viewName}"]`).classList.add('active');
+            
+            // Mise à jour navigation mobile
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`.nav-tab[data-view="${viewName}"]`).classList.add('active');
+            
+            if (viewName === 'analytics') {
+                updateAnalytics();
+                renderHeatmap();
+                initSymbolChart();
+            }
+        }
+
+        // Gestion des données
+        function loadTradesLocal() {
+            try {
+                const stored = localStorage.getItem('trading_journal_data');
+                if (stored) {
+                    const data = JSON.parse(stored);
+                    trades = data.trades || [];
+                    capital = data.capital || 10000;
+                }
+                
+                trades.forEach(trade => {
+                    if (trade.pnl === undefined) {
+                        trade.pnl = computePnL(trade);
+                    }
+                });
+                
+                renderTrades();
+                updateDashboard();
+                updateChart();
+                renderHeatmap();
+            } catch (error) {
+                console.error('Erreur chargement local:', error);
+                trades = [];
+                capital = 10000;
+            }
+        }
+
+        function saveTradesLocal() {
+            try {
+                const data = {
+                    trades: trades,
+                    capital: capital
+                };
+                localStorage.setItem('trading_journal_data', JSON.stringify(data));
+                return true;
+            } catch (error) {
+                console.error('Erreur sauvegarde locale:', error);
+                return false;
+            }
+        }
+
+        function computePnL(trade) {
+            if (!trade.exit_price) return null;
+            
+            let pnl;
+            if (trade.side === 'long') {
+                pnl = (trade.exit_price - trade.entry_price) * trade.size - (trade.fees || 0) - (trade.taxes || 0);
+            } else {
+                pnl = (trade.entry_price - trade.exit_price) * trade.size - (trade.fees || 0) - (trade.taxes || 0);
             }
             
-            saveTrades();
-            renderTrades();
-            updateDashboard();
-            updateChart();
-            renderHeatmap();
+            return parseFloat(pnl.toFixed(2));
+        }
+
+        // Rendu des trades
+        function renderTrades() {
+            const recentList = document.getElementById('recentTradesList');
+            const allList = document.getElementById('allTradesList');
             
-            closeModal('importModal');
-            showToast(`${imported} trades importés avec succès`, 'success');
-            fileInput.value = '';
+            const recentTrades = trades.slice(0, 5);
+            const allTrades = trades;
             
-          } catch (error) {
-            showToast('Erreur lors de l\'import: ' + error.message, 'error');
-          }
-        };
-        
-        reader.readAsText(file);
-      });
-      
-      // Modal close buttons
-      document.getElementById('closeTradeModal').addEventListener('click', () => closeModal('tradeModal'));
-      document.getElementById('closeImportModal').addEventListener('click', () => closeModal('importModal'));
-      
-      // Close modal when clicking overlay
-      document.querySelectorAll('.modal-overlay').forEach(modal => {
-        modal.addEventListener('click', (e) => {
-          if (e.target === modal) {
-            closeModal(modal.id);
-          }
+            function createTradeHTML(trade) {
+                const pnlPercent = trade.pnl !== null ? 
+                    ((trade.pnl / (trade.entry_price * trade.size)) * 100).toFixed(2) + '%' : '—';
+                
+                return `
+                    <div class="trade-item ${trade.pnl >= 0 ? 'win' : 'loss'}" onclick="openTradeDetail('${trade.id}')">
+                        <div class="trade-info">
+                            <div class="trade-symbol">${trade.symbol}</div>
+                            <div class="trade-details">${trade.side} • ${trade.size} @ ${trade.entry_price}</div>
+                        </div>
+                        <div class="trade-pnl">
+                            <div class="trade-amount ${trade.pnl >= 0 ? 'text-success' : 'text-danger'}">
+                                ${trade.pnl !== null ? (trade.pnl >= 0 ? '+' : '') + trade.pnl + ' €' : 'OUVERT'}
+                            </div>
+                            <div class="trade-percent">
+                                ${pnlPercent}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (recentTrades.length === 0) {
+                recentList.innerHTML = '<div class="text-center text-muted" style="padding: 20px;">Aucun trade enregistré</div>';
+            } else {
+                recentList.innerHTML = recentTrades.map(createTradeHTML).join('');
+            }
+            
+            if (allTrades.length === 0) {
+                allList.innerHTML = '<div class="text-center text-muted" style="padding: 20px;">Aucun trade enregistré</div>';
+            } else {
+                allList.innerHTML = allTrades.map(createTradeHTML).join('');
+            }
+        }
+
+        function openTradeDetail(tradeId) {
+            const trade = trades.find(t => t.id === tradeId);
+            if (trade) {
+                // Pré-remplir le formulaire de trade
+                document.querySelector('input[name="symbol"]').value = trade.symbol;
+                document.querySelector('select[name="side"]').value = trade.side;
+                document.querySelector('input[name="size"]').value = trade.size;
+                document.querySelector('input[name="entry_price"]').value = trade.entry_price;
+                document.querySelector('input[name="exit_price"]').value = trade.exit_price || '';
+                document.querySelector('input[name="fees"]').value = trade.fees || 0;
+                document.querySelector('input[name="taxes"]').value = trade.taxes || 0;
+                
+                openModal('tradeModal');
+            }
+        }
+
+        // Mise à jour du tableau de bord
+        function updateDashboard() {
+            const closedTrades = trades.filter(t => t.pnl !== null);
+            const winningTrades = closedTrades.filter(t => t.pnl > 0);
+            const winRate = closedTrades.length > 0 ? Math.round((winningTrades.length / closedTrades.length) * 100) : 0;
+            
+            const totalPnL = closedTrades.reduce((sum, t) => sum + (t.pnl || 0), 0);
+            const currentCapitalValue = capital + totalPnL;
+            
+            // Profit Factor
+            const totalWins = winningTrades.reduce((sum, t) => sum + t.pnl, 0);
+            const totalLosses = Math.abs(closedTrades.filter(t => t.pnl < 0).reduce((sum, t) => sum + t.pnl, 0));
+            const profitFactor = totalLosses > 0 ? (totalWins / totalLosses).toFixed(2) : '∞';
+            
+            document.getElementById('currentCapital').textContent = currentCapitalValue.toFixed(2) + ' €';
+            document.getElementById('winRate').textContent = winRate + '%';
+            document.getElementById('profitFactor').textContent = profitFactor;
+            document.getElementById('totalTrades').textContent = trades.length;
+        }
+
+        function updateAnalytics() {
+            const closedTrades = trades.filter(t => t.pnl !== null);
+            
+            if (closedTrades.length === 0) {
+                document.getElementById('analyticsProfitFactor').textContent = '--';
+                document.getElementById('expectancy').textContent = '-- €';
+                document.getElementById('bestTrade').textContent = '-- €';
+                document.getElementById('worstTrade').textContent = '-- €';
+                return;
+            }
+            
+            const totalWins = closedTrades.filter(t => t.pnl > 0).reduce((sum, t) => sum + t.pnl, 0);
+            const totalLosses = Math.abs(closedTrades.filter(t => t.pnl < 0).reduce((sum, t) => sum + t.pnl, 0));
+            const profitFactor = totalLosses > 0 ? (totalWins / totalLosses).toFixed(2) : '∞';
+            
+            const avgPnL = closedTrades.reduce((sum, t) => sum + t.pnl, 0) / closedTrades.length;
+            
+            const bestTrade = Math.max(...closedTrades.map(t => t.pnl));
+            const worstTrade = Math.min(...closedTrades.map(t => t.pnl));
+            
+            document.getElementById('analyticsProfitFactor').textContent = profitFactor;
+            document.getElementById('expectancy').textContent = avgPnL.toFixed(2) + ' €';
+            document.getElementById('bestTrade').textContent = '+' + bestTrade.toFixed(2) + ' €';
+            document.getElementById('worstTrade').textContent = worstTrade.toFixed(2) + ' €';
+        }
+
+        // Graphiques
+        function initChart() {
+            const ctx = document.getElementById('equityChart');
+            if (!ctx) return;
+            
+            equityChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Capital',
+                        data: [],
+                        borderColor: '#000000',
+                        backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: false
+                        },
+                        y: {
+                            display: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function initSymbolChart() {
+            const ctx = document.getElementById('symbolChart');
+            if (!ctx) return;
+            
+            // Calculer le PnL par symbole
+            const symbolPnL = {};
+            trades.forEach(trade => {
+                if (trade.pnl !== null) {
+                    if (!symbolPnL[trade.symbol]) {
+                        symbolPnL[trade.symbol] = 0;
+                    }
+                    symbolPnL[trade.symbol] += trade.pnl;
+                }
+            });
+            
+            const symbols = Object.keys(symbolPnL);
+            const pnls = Object.values(symbolPnL);
+            
+            if (symbolChart) {
+                symbolChart.destroy();
+            }
+            
+            symbolChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: symbols,
+                    datasets: [{
+                        label: 'P&L par Symbole',
+                        data: pnls,
+                        backgroundColor: pnls.map(pnl => pnl >= 0 ? '#00C48C' : '#FF5C63'),
+                        borderColor: pnls.map(pnl => pnl >= 0 ? '#00A876' : '#E53E3E'),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChart() {
+            if (!equityChart) return;
+            
+            const closedTrades = trades.filter(t => t.pnl !== null);
+            let currentCapital = capital;
+            const data = [currentCapital];
+            
+            closedTrades.forEach(trade => {
+                currentCapital += trade.pnl;
+                data.push(currentCapital);
+            });
+            
+            equityChart.data.datasets[0].data = data;
+            equityChart.data.labels = Array(data.length).fill('');
+            equityChart.update();
+        }
+
+        // Heatmap
+        function renderHeatmap() {
+            const container = document.getElementById('heatmap');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            const days = 30;
+            const now = new Date();
+            
+            for (let i = days - 1; i >= 0; i--) {
+                const day = new Date(now);
+                day.setDate(now.getDate() - i);
+                
+                const dayTrades = trades.filter(t => {
+                    if (!t.exit_timestamp) return false;
+                    try {
+                        const tradeDate = new Date(t.exit_timestamp);
+                        return tradeDate.toDateString() === day.toDateString();
+                    } catch {
+                        return false;
+                    }
+                });
+                
+                const dayPnL = dayTrades.reduce((sum, t) => sum + (t.pnl || 0), 0);
+                
+                const cell = document.createElement('div');
+                cell.className = 'heat-cell';
+                cell.title = `${day.toLocaleDateString()}: ${dayPnL.toFixed(2)} €`;
+                
+                if (dayPnL > 0) {
+                    const intensity = Math.min(dayPnL / 100, 1);
+                    cell.style.background = `rgba(0, 196, 140, ${0.3 + intensity * 0.7})`;
+                } else if (dayPnL < 0) {
+                    const intensity = Math.min(Math.abs(dayPnL) / 100, 1);
+                    cell.style.background = `rgba(255, 92, 99, ${0.3 + intensity * 0.7})`;
+                }
+                
+                if (Math.abs(dayPnL) > 10) {
+                    cell.textContent = Math.abs(Math.round(dayPnL));
+                }
+                
+                container.appendChild(cell);
+            }
+        }
+
+        // Gestion des événements
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Initialisation
+            initChart();
+            
+            // Vérifier l'authentification au démarrage
+            await checkAuth();
+            
+            // Load capital from localStorage
+            const savedCapital = localStorage.getItem('capital');
+            if (savedCapital) {
+                capital = parseFloat(savedCapital);
+                document.getElementById('initialCapital').value = capital;
+            }
+            
+            // Charger les trades locaux
+            loadTradesLocal();
+            
+            // Navigation desktop
+            document.querySelectorAll('.nav-item').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const view = tab.getAttribute('data-view');
+                    showView(view);
+                });
+            });
+            
+            // Navigation mobile
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const view = tab.getAttribute('data-view');
+                    showView(view);
+                });
+            });
+            
+            // Auth buttons
+            document.getElementById('loginButton').addEventListener('click', () => {
+                openAuthModal('login');
+            });
+            
+            document.getElementById('signupButton').addEventListener('click', () => {
+                openAuthModal('signup');
+            });
+            
+            // New trade buttons
+            document.getElementById('btnNewTrade').addEventListener('click', () => {
+                openModal('tradeModal');
+            });
+            
+            document.getElementById('openNewTrade').addEventListener('click', () => {
+                openModal('tradeModal');
+            });
+            
+            document.getElementById('mobileNewTrade').addEventListener('click', () => {
+                openModal('tradeModal');
+            });
+            
+            // Mobile menu
+            document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+                document.getElementById('sidebar').classList.toggle('active');
+            });
+            
+            // Auth tabs
+            document.querySelectorAll('.auth-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabType = tab.getAttribute('data-tab');
+                    switchAuthTab(tabType);
+                });
+            });
+            
+            // Auth form
+            document.getElementById('authForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const email = document.getElementById('authEmail').value;
+                const password = document.getElementById('authPassword').value;
+                const isLogin = document.getElementById('authModalTitle').textContent === 'Connexion';
+                
+                let result;
+                if (isLogin) {
+                    result = await signIn(email, password);
+                } else {
+                    const confirmPassword = document.getElementById('confirmPassword').value;
+                    if (password !== confirmPassword) {
+                        document.getElementById('authMessage').textContent = 'Les mots de passe ne correspondent pas';
+                        document.getElementById('authMessage').style.color = 'var(--red)';
+                        return;
+                    }
+                    result = await signUp(email, password);
+                }
+                
+                if (result.success) {
+                    document.getElementById('authMessage').textContent = isLogin ? 'Connexion réussie!' : 'Inscription réussie!';
+                    document.getElementById('authMessage').style.color = 'var(--green)';
+                    
+                    setTimeout(() => {
+                        closeModal('authModal');
+                        currentUser = result.data.user;
+                        updateUIForUser();
+                        document.getElementById('authForm').reset();
+                    }, 1500);
+                } else {
+                    document.getElementById('authMessage').textContent = result.error;
+                    document.getElementById('authMessage').style.color = 'var(--red)';
+                }
+            });
+            
+            // Trade form
+            document.getElementById('tradeForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                
+                const trade = {
+                    id: 't_' + Math.random().toString(36).substr(2, 9),
+                    symbol: formData.get('symbol').toUpperCase(),
+                    side: formData.get('side'),
+                    size: parseFloat(formData.get('size')),
+                    entry_price: parseFloat(formData.get('entry_price')),
+                    exit_price: formData.get('exit_price') ? parseFloat(formData.get('exit_price')) : null,
+                    fees: parseFloat(formData.get('fees')) || 0,
+                    taxes: parseFloat(formData.get('taxes')) || 0,
+                    entry_timestamp: new Date().toISOString(),
+                    exit_timestamp: null,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                };
+                
+                trade.pnl = computePnL(trade);
+                trades.unshift(trade);
+                
+                // Sauvegarder localement
+                saveTradesLocal();
+                
+                // Synchroniser avec le cloud si connecté
+                if (currentUser) {
+                    await syncTradesToCloud();
+                }
+                
+                renderTrades();
+                updateDashboard();
+                updateChart();
+                renderHeatmap();
+                
+                closeModal('tradeModal');
+                showToast('Trade enregistré avec succès!', 'success');
+                e.target.reset();
+            });
+            
+            // Save capital
+            document.getElementById('saveCapitalSettings').addEventListener('click', () => {
+                const newCapital = parseFloat(document.getElementById('initialCapital').value);
+                
+                if (!isNaN(newCapital) && newCapital > 0) {
+                    capital = newCapital;
+                    localStorage.setItem('capital', capital.toString());
+                    updateDashboard();
+                    updateChart();
+                    showToast('Capital sauvegardé', 'success');
+                } else {
+                    showToast('Veuillez entrer un capital valide', 'error');
+                }
+            });
+            
+            // CSV Import/Export
+            document.getElementById('importCSV').addEventListener('click', () => {
+                openModal('importModal');
+            });
+            
+            document.getElementById('exportCSV').addEventListener('click', () => {
+                if (trades.length === 0) {
+                    showToast('Aucun trade à exporter', 'warning');
+                    return;
+                }
+                
+                try {
+                    const headers = ['symbol', 'side', 'size', 'entry_price', 'exit_price', 'fees', 'taxes', 'entry_timestamp'];
+                    const rows = trades.map(trade => 
+                        headers.map(header => trade[header] || '').join(',')
+                    );
+                    
+                    const csv = headers.join(',') + '\n' + rows.join('\n');
+                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `trades_${new Date().toISOString().split('T')[0]}.csv`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    
+                    showToast('CSV exporté avec succès', 'success');
+                } catch (error) {
+                    console.error('Erreur export CSV:', error);
+                    showToast('Erreur lors de l\'export CSV', 'error');
+                }
+            });
+            
+            document.getElementById('processCSV').addEventListener('click', () => {
+                const fileInput = document.getElementById('csvFile');
+                const file = fileInput.files[0];
+                
+                if (!file) {
+                    showToast('Veuillez sélectionner un fichier', 'error');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const csv = e.target.result;
+                        const lines = csv.split('\n').filter(line => line.trim());
+                        const headers = lines[0].split(',').map(h => h.trim());
+                        
+                        let imported = 0;
+                        for (let i = 1; i < lines.length; i++) {
+                            if (!lines[i].trim()) continue;
+                            
+                            const values = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+                            const trade = {};
+                            
+                            headers.forEach((header, index) => {
+                                trade[header] = values[index] || '';
+                            });
+                            
+                            // Convert numeric values
+                            trade.size = parseFloat(trade.size) || 1;
+                            trade.entry_price = parseFloat(trade.entry_price) || 0;
+                            trade.exit_price = trade.exit_price ? parseFloat(trade.exit_price) : null;
+                            trade.fees = parseFloat(trade.fees) || 0;
+                            trade.taxes = parseFloat(trade.taxes) || 0;
+                            
+                            if (!trade.id) {
+                                trade.id = 't_' + Math.random().toString(36).substr(2, 9);
+                            }
+                            
+                            if (!trade.entry_timestamp) {
+                                trade.entry_timestamp = new Date().toISOString();
+                            }
+                            
+                            trade.pnl = computePnL(trade);
+                            trade.created_at = new Date().toISOString();
+                            trade.updated_at = new Date().toISOString();
+                            
+                            trades.push(trade);
+                            imported++;
+                        }
+                        
+                        saveTradesLocal();
+                        renderTrades();
+                        updateDashboard();
+                        updateChart();
+                        renderHeatmap();
+                        
+                        closeModal('importModal');
+                        showToast(`${imported} trades importés avec succès`, 'success');
+                        fileInput.value = '';
+                        
+                    } catch (error) {
+                        showToast('Erreur lors de l\'import CSV: ' + error.message, 'error');
+                    }
+                };
+                
+                reader.readAsText(file);
+            });
+            
+            // Modal close buttons
+            document.getElementById('closeAuthModal').addEventListener('click', () => closeModal('authModal'));
+            document.getElementById('closeTradeModal').addEventListener('click', () => closeModal('tradeModal'));
+            document.getElementById('closeImportModal').addEventListener('click', () => closeModal('importModal'));
+            
+            // Close modal when clicking overlay
+            document.querySelectorAll('.modal-overlay').forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        closeModal(modal.id);
+                    }
+                });
+            });
+
+            // Écouter les changements d'authentification
+            supabase.auth.onAuthStateChange(async (event, session) => {
+                if (event === 'SIGNED_IN' && session) {
+                    currentUser = session.user;
+                    updateUIForUser();
+                    await loadTradesFromCloud();
+                } else if (event === 'SIGNED_OUT') {
+                    currentUser = null;
+                    updateUIForUser();
+                    loadTradesLocal();
+                }
+            });
         });
-      });
-    });
 
-    // Handle iOS viewport height
-    function setVH() {
-      const vh = window.innerHeight * 0.01;
-      document.documentElement.style.setProperty('--vh', `${vh}px`);
-    }
+        function openAuthModal(type) {
+            switchAuthTab(type);
+            openModal('authModal');
+        }
 
-    setVH();
-    window.addEventListener('resize', setVH);
-    window.addEventListener('orientationchange', setVH);
-  </script>
+        function switchAuthTab(type) {
+            const isLogin = type === 'login';
+            
+            document.getElementById('authModalTitle').textContent = isLogin ? 'Connexion' : 'Inscription';
+            document.getElementById('authSubmit').textContent = isLogin ? 'Se connecter' : 'Créer un compte';
+            document.getElementById('confirmPasswordGroup').classList.toggle('hidden', isLogin);
+            
+            document.querySelectorAll('.auth-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.getAttribute('data-tab') === type);
+                tab.style.borderBottomColor = tab.getAttribute('data-tab') === type ? 'var(--black)' : 'transparent';
+                tab.style.color = tab.getAttribute('data-tab') === type ? 'var(--black)' : 'var(--gray-500)';
+            });
+            
+            document.getElementById('authMessage').textContent = '';
+        }
+    </script>
 </body>
 </html>
