@@ -1,0 +1,1731 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trade Journal Mobile</title>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --primary: #00C48C;
+            --primary-dark: #00A876;
+            --danger: #FF5C63;
+            --warning: #FFA726;
+            --info: #2196F3;
+            
+            --bg-primary: #0A0A0A;
+            --bg-secondary: #1A1A1A;
+            --bg-card: #2A2A2A;
+            
+            --text-primary: #FFFFFF;
+            --text-secondary: #A0A0A0;
+            --text-muted: #666666;
+            
+            --border: rgba(255,255,255,0.1);
+            --shadow: 0 4px 20px rgba(0,0,0,0.3);
+            
+            --safe-area-top: env(safe-area-inset-top);
+            --safe-area-bottom: env(safe-area-inset-bottom);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #FFFFFF;
+            --bg-secondary: #F8F9FA;
+            --bg-card: #FFFFFF;
+            
+            --text-primary: #1A1A1A;
+            --text-secondary: #666666;
+            --text-muted: #A0A0A0;
+            
+            --border: rgba(0,0,0,0.1);
+            --shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.5;
+            overflow-x: hidden;
+            padding-top: var(--safe-area-top);
+            padding-bottom: var(--safe-area-bottom);
+        }
+
+        /* Écran de connexion */
+        .login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            z-index: 3000;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-logo {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .login-logo i {
+            font-size: 64px;
+            color: var(--primary);
+            margin-bottom: 16px;
+        }
+
+        .login-logo h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .login-logo p {
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        .login-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            border: none;
+            background: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .auth-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 0;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 16px;
+            min-height: 44px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 44px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-block {
+            width: 100%;
+        }
+
+        .auth-divider {
+            text-align: center;
+            margin: 20px 0;
+            color: var(--text-secondary);
+            position: relative;
+        }
+
+        .auth-divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .auth-divider span {
+            background: var(--bg-card);
+            padding: 0 16px;
+            position: relative;
+        }
+
+        .btn-google {
+            background: white;
+            color: #333;
+            border: 1px solid var(--border);
+        }
+
+        .btn-anonymous {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        /* Toast System */
+        .toast-container {
+            position: fixed;
+            top: 80px;
+            left: 0;
+            right: 0;
+            z-index: 10000;
+            padding: 0 16px;
+            pointer-events: none;
+        }
+
+        .toast {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideDown 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .toast.success { border-left: 4px solid var(--primary); }
+        .toast.error { border-left: 4px solid var(--danger); }
+        .toast.warning { border-left: 4px solid var(--warning); }
+        .toast.info { border-left: 4px solid var(--info); }
+
+        @keyframes slideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Header Mobile */
+        .header {
+            position: fixed;
+            top: var(--safe-area-top);
+            left: 0;
+            right: 0;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 16px;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            display: none; /* Caché au début */
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            width: 44px;
+            height: 44px;
+            border: none;
+            background: var(--bg-card);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-primary);
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            padding: 8px 16px;
+            padding-bottom: calc(8px + var(--safe-area-bottom));
+            display: flex;
+            justify-content: space-around;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            display: none; /* Caché au début */
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 12px;
+            border: none;
+            background: none;
+            color: var(--text-secondary);
+            font-size: 10px;
+            cursor: pointer;
+            border-radius: 12px;
+            min-width: 60px;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+            background: rgba(0, 196, 140, 0.1);
+        }
+
+        .nav-icon {
+            font-size: 20px;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 80px 0 80px 0;
+            min-height: 100vh;
+            display: none; /* Caché au début */
+        }
+
+        .page {
+            display: none;
+            padding: 16px;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .stat-card {
+            background: var(--bg-secondary);
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .stat-positive { color: var(--primary); }
+        .stat-negative { color: var(--danger); }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Trade List */
+        .trade-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .trade-item {
+            background: var(--bg-secondary);
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .trade-item:active {
+            transform: scale(0.98);
+        }
+
+        .trade-item.win {
+            border-left: 4px solid var(--primary);
+            background: linear-gradient(90deg, rgba(0,196,140,0.1), transparent);
+        }
+
+        .trade-item.loss {
+            border-left: 4px solid var(--danger);
+            background: linear-gradient(90deg, rgba(255,92,99,0.1), transparent);
+        }
+
+        .trade-symbol {
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .trade-details {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .trade-pnl {
+            text-align: right;
+            font-weight: 600;
+        }
+
+        .trade-pnl.positive { color: var(--primary); }
+        .trade-pnl.negative { color: var(--danger); }
+
+        /* Forms */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        /* Modals */
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 16px;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal {
+            background: var(--bg-card);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+
+        .modal-header {
+            padding: 20px 20px 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .modal-body {
+            padding: 0 20px 20px 20px;
+        }
+
+        /* FAB */
+        .fab {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: none;
+            color: white;
+            font-size: 24px;
+            box-shadow: 0 8px 24px rgba(0, 196, 140, 0.3);
+            cursor: pointer;
+            z-index: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            display: none; /* Caché au début */
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .quick-action {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        /* Charts */
+        .chart-container {
+            position: relative;
+            height: 200px;
+            margin: 16px 0;
+        }
+
+        /* Loading States */
+        .skeleton {
+            background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-card) 50%, var(--bg-secondary) 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 8px;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Utility Classes */
+        .text-center { text-align: center; }
+        .text-muted { color: var(--text-muted); }
+        .text-small { font-size: 12px; }
+        .mb-16 { margin-bottom: 16px; }
+        .mt-16 { margin-top: 16px; }
+        .hidden { display: none; }
+
+        /* Empty States */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        /* User Info */
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .user-details {
+            flex: 1;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .user-email {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 360px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .quick-actions {
+                flex-direction: column;
+            }
+        }
+
+        /* Swipe gestures for navigation */
+        .page {
+            touch-action: pan-y;
+        }
+    </style>
+</head>
+<body>
+    <!-- Écran de Connexion -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-container">
+            <div class="login-logo">
+                <i class="fas fa-chart-line"></i>
+                <h1>Trade Journal</h1>
+                <p>Gérez vos trades en mobile</p>
+            </div>
+            
+            <div class="login-card">
+                <div class="auth-tabs">
+                    <button class="auth-tab active" data-tab="login">Connexion</button>
+                    <button class="auth-tab" data-tab="signup">Inscription</button>
+                </div>
+                
+                <form class="auth-form" id="authForm">
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" id="authEmail" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Mot de passe</label>
+                        <input type="password" class="form-input" id="authPassword" required minlength="6">
+                    </div>
+                    
+                    <div class="form-group" id="authConfirmGroup" style="display: none;">
+                        <label class="form-label">Confirmer le mot de passe</label>
+                        <input type="password" class="form-input" id="authConfirmPassword" minlength="6">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-block" id="authSubmit">
+                        Se connecter
+                    </button>
+                </form>
+                
+                <div class="auth-divider">
+                    <span>Ou continuer avec</span>
+                </div>
+                
+                <div class="auth-form">
+                    <button type="button" class="btn btn-google btn-block" id="googleLogin">
+                        <i class="fab fa-google"></i>
+                        Google
+                    </button>
+                    
+                    <button type="button" class="btn btn-anonymous btn-block" id="anonymousLogin">
+                        <i class="fas fa-user-secret"></i>
+                        Mode Invité
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Header -->
+    <header class="header" id="appHeader">
+        <div class="header-title" id="headerTitle">Tableau de bord</div>
+        <div class="header-actions">
+            <button class="icon-btn" id="themeToggle">
+                <i class="fas fa-moon"></i>
+            </button>
+            <button class="icon-btn" id="syncButton">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+            <button class="icon-btn" id="logoutButton">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <!-- User Info -->
+        <div class="user-info" id="userInfo">
+            <div class="user-avatar" id="userAvatar">U</div>
+            <div class="user-details">
+                <div class="user-name" id="userName">Utilisateur</div>
+                <div class="user-email" id="userEmail">email@exemple.com</div>
+            </div>
+        </div>
+
+        <!-- Dashboard Page -->
+        <section id="dashboardPage" class="page active">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Performance</div>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalPnl">--</div>
+                        <div class="stat-label">P&L Total</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="winRate">--%</div>
+                        <div class="stat-label">Win Rate</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalTrades">0</div>
+                        <div class="stat-label">Total Trades</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="avgTrade">--</div>
+                        <div class="stat-label">Moyenne/Trade</div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Trades Récents</div>
+                    <button class="btn btn-outline" onclick="showPage('tradesPage')">
+                        Voir tout
+                    </button>
+                </div>
+                
+                <div class="trade-list" id="recentTradesList">
+                    <!-- Trades will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <div class="quick-actions">
+                <button class="btn btn-primary quick-action" onclick="openTradeModal()">
+                    <i class="fas fa-plus"></i>
+                    Nouveau Trade
+                </button>
+                <button class="btn btn-outline quick-action" onclick="showPage('analyticsPage')">
+                    <i class="fas fa-chart-bar"></i>
+                    Analytics
+                </button>
+            </div>
+        </section>
+
+        <!-- Trades Page -->
+        <section id="tradesPage" class="page">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Tous les Trades</div>
+                    <div class="header-actions">
+                        <button class="icon-btn" onclick="exportCSV()" title="Exporter CSV">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="icon-btn" onclick="openTradeModal()" title="Nouveau trade">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="trade-list" id="allTradesList">
+                    <!-- All trades will be populated by JavaScript -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Analytics Page -->
+        <section id="analyticsPage" class="page">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Analyses Détaillées</div>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="profitFactor">--</div>
+                        <div class="stat-label">Profit Factor</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="maxDrawdown">--%</div>
+                        <div class="stat-label">Max Drawdown</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="bestTrade">--</div>
+                        <div class="stat-label">Meilleur Trade</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="worstTrade">--</div>
+                        <div class="stat-label">Pire Trade</div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="analyticsChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Settings Page -->
+        <section id="settingsPage" class="page">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Paramètres</div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Capital Initial</label>
+                    <input type="number" class="form-input" id="initialCapital" placeholder="10000">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Devise</label>
+                    <select class="form-input" id="currency">
+                        <option value="EUR">€ EUR</option>
+                        <option value="USD">$ USD</option>
+                        <option value="GBP">£ GBP</option>
+                    </select>
+                </div>
+                
+                <button class="btn btn-primary btn-block" onclick="saveSettings()">
+                    Sauvegarder
+                </button>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Gestion des Données</div>
+                </div>
+                
+                <div class="form-group">
+                    <button class="btn btn-outline btn-block" onclick="exportCSV()">
+                        <i class="fas fa-download"></i>
+                        Exporter les Données
+                    </button>
+                </div>
+                
+                <div class="form-group">
+                    <input type="file" id="importFile" accept=".csv" class="hidden">
+                    <button class="btn btn-outline btn-block" onclick="document.getElementById('importFile').click()">
+                        <i class="fas fa-upload"></i>
+                        Importer CSV
+                    </button>
+                </div>
+                
+                <div class="form-group">
+                    <button class="btn btn-danger btn-block" onclick="clearAllData()">
+                        <i class="fas fa-trash"></i>
+                        Supprimer Toutes les Données
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav" id="bottomNav">
+        <button class="nav-item active" onclick="showPage('dashboardPage')">
+            <i class="fas fa-chart-line nav-icon"></i>
+            Dashboard
+        </button>
+        <button class="nav-item" onclick="showPage('tradesPage')">
+            <i class="fas fa-list nav-icon"></i>
+            Trades
+        </button>
+        <button class="nav-item" onclick="showPage('analyticsPage')">
+            <i class="fas fa-chart-bar nav-icon"></i>
+            Analytics
+        </button>
+        <button class="nav-item" onclick="showPage('settingsPage')">
+            <i class="fas fa-cog nav-icon"></i>
+            Réglages
+        </button>
+    </nav>
+
+    <!-- FAB -->
+    <button class="fab" id="fabButton" onclick="openTradeModal()">
+        <i class="fas fa-plus"></i>
+    </button>
+
+    <!-- Trade Modal -->
+    <div class="modal-backdrop" id="tradeModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title" id="tradeModalTitle">Nouveau Trade</div>
+                <button class="icon-btn" onclick="closeTradeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="tradeForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Symbole</label>
+                            <input type="text" class="form-input" id="symbol" required placeholder="BTC">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Side</label>
+                            <select class="form-input" id="side" required>
+                                <option value="long">Long</option>
+                                <option value="short">Short</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Prix Entrée</label>
+                            <input type="number" class="form-input" id="entryPrice" required step="0.0001">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Prix Sortie</label>
+                            <input type="number" class="form-input" id="exitPrice" step="0.0001">
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Quantité</label>
+                            <input type="number" class="form-input" id="quantity" required step="0.001">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Frais</label>
+                            <input type="number" class="form-input" id="fees" value="0" step="0.01">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Commentaire</label>
+                        <textarea class="form-input" id="comment" rows="3" placeholder="Notes sur le trade..."></textarea>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Date Entrée</label>
+                            <input type="datetime-local" class="form-input" id="entryDate">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Date Sortie</label>
+                            <input type="datetime-local" class="form-input" id="exitDate">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="fas fa-save"></i>
+                            Enregistrer le Trade
+                        </button>
+                    </div>
+
+                    <div id="editButtons" class="hidden">
+                        <button type="button" class="btn btn-danger btn-block" onclick="deleteCurrentTrade()">
+                            <i class="fas fa-trash"></i>
+                            Supprimer le Trade
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== CONFIGURATION FIREBASE ==========
+        const firebaseConfig = {
+            apiKey: "AIzaSyDGfiBOOEZiLZmh7clQlSZAr1W6P6Si8vM",
+            authDomain: "journaltrading-a6bc6.firebaseapp.com",
+            projectId: "journaltrading-a6bc6",
+            storageBucket: "journaltrading-a6bc6.firebasestorage.app",
+            messagingSenderId: "220303277331",
+            appId: "1:220303277331:web:f4251eebd62d3058f82ee6",
+            measurementId: "G-8EEHYVXQS6"
+        };
+
+        // Initialiser Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // ========== ÉTAT GLOBAL ==========
+        const AppState = {
+            trades: [],
+            settings: {
+                capital: 10000,
+                currency: 'EUR'
+            },
+            currentUser: null,
+            editingTrade: null,
+            
+            getStorageKey() {
+                const userId = this.currentUser ? this.currentUser.uid : 'guest';
+                return `mobile_trading_journal_${userId}`;
+            },
+            
+            init() {
+                this.loadFromLocal();
+                this.loadSettings();
+            },
+            
+            loadFromLocal() {
+                try {
+                    const storageKey = this.getStorageKey();
+                    const storedTrades = localStorage.getItem(storageKey);
+                    this.trades = storedTrades ? JSON.parse(storedTrades) : [];
+                    this.trades = this.trades.filter(t => t && t.id && t.symbol);
+                } catch (error) {
+                    console.error('Error loading data:', error);
+                    this.trades = [];
+                }
+            },
+            
+            saveToLocal() {
+                try {
+                    const storageKey = this.getStorageKey();
+                    localStorage.setItem(storageKey, JSON.stringify(this.trades));
+                    return true;
+                } catch (error) {
+                    this.showToast('Erreur sauvegarde locale', 'error');
+                    return false;
+                }
+            },
+            
+            loadSettings() {
+                try {
+                    const settings = localStorage.getItem('mobile_trading_settings');
+                    if (settings) {
+                        this.settings = { ...this.settings, ...JSON.parse(settings) };
+                    }
+                } catch (error) {
+                    console.error('Error loading settings:', error);
+                }
+            },
+            
+            saveSettings() {
+                try {
+                    localStorage.setItem('mobile_trading_settings', JSON.stringify(this.settings));
+                    return true;
+                } catch (error) {
+                    this.showToast('Erreur sauvegarde paramètres', 'error');
+                    return false;
+                }
+            },
+            
+            showToast(message, type = 'info') {
+                const toastContainer = document.getElementById('toastContainer');
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                
+                const icons = {
+                    success: '✅',
+                    error: '❌',
+                    warning: '⚠️',
+                    info: '💡'
+                };
+                
+                toast.innerHTML = `
+                    <div>${icons[type] || icons.info}</div>
+                    <div>${message}</div>
+                `;
+                
+                toastContainer.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.remove();
+                }, 4000);
+            }
+        };
+
+        // ========== AUTHENTIFICATION ==========
+        async function signUp(email, password) {
+            try {
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                return { success: true, user: userCredential.user };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function signIn(email, password) {
+            try {
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                return { success: true, user: userCredential.user };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function signInWithGoogle() {
+            try {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                const userCredential = await auth.signInWithPopup(provider);
+                return { success: true, user: userCredential.user };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function signInAnonymously() {
+            try {
+                const userCredential = await auth.signInAnonymously();
+                return { success: true, user: userCredential.user };
+            } catch (error) {
+                // Si l'authentification anonyme est désactivée, on crée un utilisateur local
+                console.log('Auth anonyme désactivée, mode local activé');
+                const localUser = {
+                    uid: 'local_user_' + Date.now(),
+                    email: 'invite@local.com',
+                    isAnonymous: true
+                };
+                return { success: true, user: localUser };
+            }
+        }
+
+        async function signOut() {
+            try {
+                await auth.signOut();
+                showLoginScreen();
+                AppState.showToast('Déconnexion réussie', 'success');
+            } catch (error) {
+                AppState.showToast('Erreur de déconnexion', 'error');
+            }
+        }
+
+        // ========== GESTION DES ÉCRANS ==========
+        function showLoginScreen() {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('appHeader').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('bottomNav').style.display = 'none';
+            document.getElementById('fabButton').style.display = 'none';
+            AppState.currentUser = null;
+        }
+
+        function showApp() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('appHeader').style.display = 'flex';
+            document.getElementById('mainContent').style.display = 'block';
+            document.getElementById('bottomNav').style.display = 'flex';
+            document.getElementById('fabButton').style.display = 'flex';
+            updateUserInfo();
+            updateStats();
+            renderRecentTrades();
+        }
+
+        function updateUserInfo() {
+            if (AppState.currentUser) {
+                document.getElementById('userName').textContent = 
+                    AppState.currentUser.displayName || 
+                    AppState.currentUser.email.split('@')[0] || 
+                    'Utilisateur';
+                document.getElementById('userEmail').textContent = 
+                    AppState.currentUser.email || 'Mode invité';
+                document.getElementById('userAvatar').textContent = 
+                    (AppState.currentUser.email || 'U').charAt(0).toUpperCase();
+            }
+        }
+
+        // ========== FONCTIONS UTILITAIRES ==========
+        function generateId() {
+            return 't_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now().toString(36);
+        }
+
+        function calculatePnL(trade) {
+            if (!trade.exitPrice) return null;
+            
+            let pnl;
+            if (trade.side === 'long') {
+                pnl = (trade.exitPrice - trade.entryPrice) * trade.quantity - (trade.fees || 0);
+            } else {
+                pnl = (trade.entryPrice - trade.exitPrice) * trade.quantity - (trade.fees || 0);
+            }
+            
+            return parseFloat(pnl.toFixed(2));
+        }
+
+        function formatCurrency(amount) {
+            const currency = AppState.settings.currency;
+            const symbols = { EUR: '€', USD: '$', GBP: '£' };
+            const symbol = symbols[currency] || '€';
+            
+            if (amount >= 0) {
+                return `+${symbol}${amount.toFixed(2)}`;
+            } else {
+                return `-${symbol}${Math.abs(amount).toFixed(2)}`;
+            }
+        }
+
+        // ========== GESTION DE L'UI ==========
+        function showPage(pageId) {
+            // Mettre à jour le titre du header
+            const titles = {
+                dashboardPage: 'Tableau de bord',
+                tradesPage: 'Mes Trades',
+                analyticsPage: 'Analytics',
+                settingsPage: 'Paramètres'
+            };
+            document.getElementById('headerTitle').textContent = titles[pageId] || 'Trade Journal';
+            
+            // Cacher toutes les pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // Afficher la page demandée
+            document.getElementById(pageId).classList.add('active');
+            
+            // Mettre à jour la navigation
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Trouver et activer le bouton correspondant
+            const navButtons = {
+                dashboardPage: 0,
+                tradesPage: 1,
+                analyticsPage: 2,
+                settingsPage: 3
+            };
+            
+            document.querySelectorAll('.nav-item')[navButtons[pageId]]?.classList.add('active');
+            
+            // Recalculer les stats si nécessaire
+            if (pageId === 'dashboardPage' || pageId === 'analyticsPage') {
+                updateStats();
+                renderRecentTrades();
+            }
+            
+            if (pageId === 'tradesPage') {
+                renderAllTrades();
+            }
+        }
+
+        function openTradeModal(trade = null) {
+            const modal = document.getElementById('tradeModal');
+            const form = document.getElementById('tradeForm');
+            const title = document.getElementById('tradeModalTitle');
+            const editButtons = document.getElementById('editButtons');
+            
+            if (trade) {
+                // Mode édition
+                title.textContent = 'Modifier Trade';
+                editButtons.classList.remove('hidden');
+                AppState.editingTrade = trade;
+                
+                // Remplir le formulaire
+                document.getElementById('symbol').value = trade.symbol;
+                document.getElementById('side').value = trade.side;
+                document.getElementById('entryPrice').value = trade.entryPrice;
+                document.getElementById('exitPrice').value = trade.exitPrice || '';
+                document.getElementById('quantity').value = trade.quantity;
+                document.getElementById('fees').value = trade.fees || 0;
+                document.getElementById('comment').value = trade.comment || '';
+                
+                if (trade.entryDate) {
+                    document.getElementById('entryDate').value = trade.entryDate.slice(0, 16);
+                }
+                if (trade.exitDate) {
+                    document.getElementById('exitDate').value = trade.exitDate.slice(0, 16);
+                }
+            } else {
+                // Mode création
+                title.textContent = 'Nouveau Trade';
+                editButtons.classList.add('hidden');
+                AppState.editingTrade = null;
+                form.reset();
+                
+                // Définir la date actuelle par défaut
+                const now = new Date().toISOString().slice(0, 16);
+                document.getElementById('entryDate').value = now;
+            }
+            
+            modal.style.display = 'flex';
+        }
+
+        function closeTradeModal() {
+            document.getElementById('tradeModal').style.display = 'none';
+            document.getElementById('tradeForm').reset();
+            AppState.editingTrade = null;
+        }
+
+        // ========== GESTION DES TRADES ==========
+        function saveTrade(event) {
+            event.preventDefault();
+            
+            const tradeData = {
+                symbol: document.getElementById('symbol').value.toUpperCase(),
+                side: document.getElementById('side').value,
+                entryPrice: parseFloat(document.getElementById('entryPrice').value),
+                exitPrice: document.getElementById('exitPrice').value ? parseFloat(document.getElementById('exitPrice').value) : null,
+                quantity: parseFloat(document.getElementById('quantity').value),
+                fees: parseFloat(document.getElementById('fees').value) || 0,
+                comment: document.getElementById('comment').value,
+                entryDate: document.getElementById('entryDate').value ? new Date(document.getElementById('entryDate').value).toISOString() : new Date().toISOString(),
+                exitDate: document.getElementById('exitDate').value ? new Date(document.getElementById('exitDate').value).toISOString() : null
+            };
+            
+            // Validation
+            if (!tradeData.symbol || !tradeData.entryPrice || !tradeData.quantity) {
+                AppState.showToast('Veuillez remplir tous les champs obligatoires', 'error');
+                return;
+            }
+            
+            // Calculer le PnL
+            tradeData.pnl = calculatePnL(tradeData);
+            tradeData.notional = tradeData.entryPrice * tradeData.quantity;
+            
+            if (AppState.editingTrade) {
+                // Mettre à jour le trade existant
+                const index = AppState.trades.findIndex(t => t.id === AppState.editingTrade.id);
+                if (index !== -1) {
+                    AppState.trades[index] = { ...AppState.editingTrade, ...tradeData };
+                    AppState.showToast('Trade modifié avec succès', 'success');
+                }
+            } else {
+                // Nouveau trade
+                tradeData.id = generateId();
+                tradeData.createdAt = new Date().toISOString();
+                AppState.trades.unshift(tradeData);
+                AppState.showToast('Trade ajouté avec succès', 'success');
+            }
+            
+            // Sauvegarder et mettre à jour l'UI
+            AppState.saveToLocal();
+            updateStats();
+            renderRecentTrades();
+            renderAllTrades();
+            closeTradeModal();
+        }
+
+        function deleteCurrentTrade() {
+            if (!AppState.editingTrade) return;
+            
+            if (confirm('Êtes-vous sûr de vouloir supprimer ce trade ?')) {
+                AppState.trades = AppState.trades.filter(t => t.id !== AppState.editingTrade.id);
+                AppState.saveToLocal();
+                AppState.showToast('Trade supprimé', 'success');
+                updateStats();
+                renderRecentTrades();
+                renderAllTrades();
+                closeTradeModal();
+            }
+        }
+
+        // ========== RENDU DES TRADES ==========
+        function renderRecentTrades() {
+            const container = document.getElementById('recentTradesList');
+            const recentTrades = AppState.trades.slice(0, 5);
+            
+            if (recentTrades.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-chart-line"></i>
+                        <div>Aucun trade enregistré</div>
+                        <button class="btn btn-primary mt-16" onclick="openTradeModal()">
+                            Ajouter votre premier trade
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = recentTrades.map(trade => `
+                <div class="trade-item ${trade.pnl > 0 ? 'win' : trade.pnl < 0 ? 'loss' : ''}" 
+                     onclick="openTradeModal(${JSON.stringify(trade).replace(/"/g, '&quot;')})">
+                    <div>
+                        <div class="trade-symbol">${trade.symbol}</div>
+                        <div class="trade-details">
+                            ${trade.side} • ${trade.quantity} @ ${trade.entryPrice}
+                        </div>
+                    </div>
+                    <div class="trade-pnl ${trade.pnl > 0 ? 'positive' : trade.pnl < 0 ? 'negative' : ''}">
+                        ${trade.pnl ? formatCurrency(trade.pnl) : 'En cours'}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderAllTrades() {
+            const container = document.getElementById('allTradesList');
+            
+            if (AppState.trades.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-list"></i>
+                        <div>Aucun trade enregistré</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = AppState.trades.map(trade => `
+                <div class="trade-item ${trade.pnl > 0 ? 'win' : trade.pnl < 0 ? 'loss' : ''}" 
+                     onclick="openTradeModal(${JSON.stringify(trade).replace(/"/g, '&quot;')})">
+                    <div>
+                        <div class="trade-symbol">${trade.symbol}</div>
+                        <div class="trade-details">
+                            ${trade.side} • ${trade.quantity} @ ${trade.entryPrice}
+                            ${trade.comment ? `<br><small>${trade.comment}</small>` : ''}
+                        </div>
+                    </div>
+                    <div class="trade-pnl ${trade.pnl > 0 ? 'positive' : trade.pnl < 0 ? 'negative' : ''}">
+                        ${trade.pnl ? formatCurrency(trade.pnl) : 'En cours'}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ========== CALCUL DES STATISTIQUES ==========
+        function updateStats() {
+            const closedTrades = AppState.trades.filter(t => t.pnl !== null);
+            const winningTrades = closedTrades.filter(t => t.pnl > 0);
+            
+            // Stats de base
+            const totalPnl = closedTrades.reduce((sum, trade) => sum + trade.pnl, 0);
+            const winRate = closedTrades.length > 0 ? (winningTrades.length / closedTrades.length * 100) : 0;
+            const avgTrade = closedTrades.length > 0 ? totalPnl / closedTrades.length : 0;
+            
+            document.getElementById('totalPnl').textContent = formatCurrency(totalPnl);
+            document.getElementById('winRate').textContent = winRate.toFixed(1) + '%';
+            document.getElementById('totalTrades').textContent = AppState.trades.length;
+            document.getElementById('avgTrade').textContent = formatCurrency(avgTrade);
+            
+            // Stats avancées
+            const profits = winningTrades.reduce((sum, trade) => sum + trade.pnl, 0);
+            const losses = Math.abs(closedTrades.filter(t => t.pnl < 0).reduce((sum, trade) => sum + trade.pnl, 0));
+            const profitFactor = losses > 0 ? (profits / losses).toFixed(2) : profits > 0 ? '∞' : '0';
+            
+            const bestTrade = closedTrades.length > 0 ? Math.max(...closedTrades.map(t => t.pnl)) : 0;
+            const worstTrade = closedTrades.length > 0 ? Math.min(...closedTrades.map(t => t.pnl)) : 0;
+            
+            document.getElementById('profitFactor').textContent = profitFactor;
+            document.getElementById('maxDrawdown').textContent = '0%'; // Simplifié pour mobile
+            document.getElementById('bestTrade').textContent = formatCurrency(bestTrade);
+            document.getElementById('worstTrade').textContent = formatCurrency(worstTrade);
+        }
+
+        // ========== GESTION DES PARAMÈTRES ==========
+        function saveSettings() {
+            const capital = parseFloat(document.getElementById('initialCapital').value);
+            const currency = document.getElementById('currency').value;
+            
+            if (capital && capital > 0) {
+                AppState.settings.capital = capital;
+                AppState.settings.currency = currency;
+                AppState.saveSettings();
+                AppState.showToast('Paramètres sauvegardés', 'success');
+                updateStats();
+            } else {
+                AppState.showToast('Capital invalide', 'error');
+            }
+        }
+
+        function loadSettings() {
+            document.getElementById('initialCapital').value = AppState.settings.capital;
+            document.getElementById('currency').value = AppState.settings.currency;
+        }
+
+        // ========== IMPORT/EXPORT ==========
+        function exportCSV() {
+            if (AppState.trades.length === 0) {
+                AppState.showToast('Aucun trade à exporter', 'warning');
+                return;
+            }
+            
+            const headers = ['Symbol', 'Side', 'Entry Price', 'Exit Price', 'Quantity', 'Fees', 'PnL', 'Comment', 'Entry Date', 'Exit Date'];
+            const csvContent = [
+                headers.join(','),
+                ...AppState.trades.map(trade => [
+                    trade.symbol,
+                    trade.side,
+                    trade.entryPrice,
+                    trade.exitPrice || '',
+                    trade.quantity,
+                    trade.fees || 0,
+                    trade.pnl || '',
+                    `"${(trade.comment || '').replace(/"/g, '""')}"`,
+                    trade.entryDate,
+                    trade.exitDate || ''
+                ].join(','))
+            ].join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `trades_export_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            AppState.showToast('CSV exporté avec succès', 'success');
+        }
+
+        function clearAllData() {
+            if (confirm('Êtes-vous sûr de vouloir supprimer TOUTES les données ? Cette action est irréversible.')) {
+                AppState.trades = [];
+                AppState.saveToLocal();
+                AppState.showToast('Toutes les données ont été supprimées', 'success');
+                updateStats();
+                renderRecentTrades();
+                renderAllTrades();
+            }
+        }
+
+        // ========== GESTION DU THÈME ==========
+        function initTheme() {
+            const savedTheme = localStorage.getItem('mobile_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            
+            const themeIcon = document.getElementById('themeToggle').querySelector('i');
+            themeIcon.className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('mobile_theme', newTheme);
+            
+            const themeIcon = document.getElementById('themeToggle').querySelector('i');
+            themeIcon.className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        }
+
+        // ========== INITIALISATION ==========
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialiser l'état
+            AppState.init();
+            initTheme();
+            loadSettings();
+            
+            // Observateur d'authentification
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    AppState.currentUser = user;
+                    AppState.loadFromLocal(); // Recharger les données pour cet utilisateur
+                    showApp();
+                    AppState.showToast(`Bienvenue ${user.email || 'Invité'} !`, 'success');
+                } else {
+                    showLoginScreen();
+                }
+            });
+            
+            // Gestion des tabs d'authentification
+            document.querySelectorAll('.auth-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabType = this.getAttribute('data-tab');
+                    
+                    // Mettre à jour les tabs
+                    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Mettre à jour le formulaire
+                    if (tabType === 'login') {
+                        document.getElementById('authSubmit').textContent = 'Se connecter';
+                        document.getElementById('authConfirmGroup').style.display = 'none';
+                    } else {
+                        document.getElementById('authSubmit').textContent = 'S\'inscrire';
+                        document.getElementById('authConfirmGroup').style.display = 'block';
+                    }
+                });
+            });
+            
+            // Formulaire d'authentification
+            document.getElementById('authForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const email = document.getElementById('authEmail').value;
+                const password = document.getElementById('authPassword').value;
+                const isLogin = document.getElementById('authSubmit').textContent === 'Se connecter';
+                
+                let result;
+                if (isLogin) {
+                    result = await signIn(email, password);
+                } else {
+                    const confirmPassword = document.getElementById('authConfirmPassword').value;
+                    if (password !== confirmPassword) {
+                        AppState.showToast('Les mots de passe ne correspondent pas', 'error');
+                        return;
+                    }
+                    result = await signUp(email, password);
+                }
+                
+                if (result.success) {
+                    AppState.showToast(isLogin ? 'Connexion réussie !' : 'Inscription réussie !', 'success');
+                } else {
+                    AppState.showToast('Erreur: ' + result.error, 'error');
+                }
+            });
+            
+            // Connexion Google
+            document.getElementById('googleLogin').addEventListener('click', async function() {
+                const result = await signInWithGoogle();
+                if (!result.success) {
+                    AppState.showToast('Erreur Google: ' + result.error, 'error');
+                }
+            });
+            
+            // Mode invité
+            document.getElementById('anonymousLogin').addEventListener('click', async function() {
+                const result = await signInAnonymously();
+                if (result.success) {
+                    AppState.showToast('Mode invité activé', 'success');
+                // Forcer le chargement des données locales
+                    AppState.loadFromLocal();
+                    updateStats();
+                    renderRecentTrades();
+                } else {
+                    AppState.showToast('Erreur: ' + result.error, 'error');
+                }
+            });
+            
+            // Déconnexion
+            document.getElementById('logoutButton').addEventListener('click', signOut);
+            
+            // Événements
+            document.getElementById('tradeForm').addEventListener('submit', saveTrade);
+            document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+            document.getElementById('syncButton').addEventListener('click', () => {
+                AppState.showToast('Synchronisation...', 'info');
+            });
+            
+            // Gestion de l'import CSV
+            document.getElementById('importFile').addEventListener('change', function(event) {
+                AppState.showToast('Import CSV à implémenter', 'info');
+                event.target.value = '';
+            });
+            
+            // Gestes tactiles pour navigation
+            let startX = 0;
+            document.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].clientX;
+            });
+            
+            document.addEventListener('touchend', (e) => {
+                const endX = e.changedTouches[0].clientX;
+                const diffX = startX - endX;
+                
+                if (Math.abs(diffX) > 50) {
+                    const currentPage = document.querySelector('.page.active').id;
+                    const pages = ['dashboardPage', 'tradesPage', 'analyticsPage', 'settingsPage'];
+                    const currentIndex = pages.indexOf(currentPage);
+                    
+                    if (diffX > 0 && currentIndex < pages.length - 1) {
+                        showPage(pages[currentIndex + 1]);
+                    } else if (diffX < 0 && currentIndex > 0) {
+                        showPage(pages[currentIndex - 1]);
+                    }
+                }
+            });
+            
+            console.log('Trade Journal Mobile initialisé');
+        });
+
+        // Exposer les fonctions globales
+        window.showPage = showPage;
+        window.openTradeModal = openTradeModal;
+        window.closeTradeModal = closeTradeModal;
+        window.exportCSV = exportCSV;
+        window.clearAllData = clearAllData;
+        window.saveSettings = saveSettings;
+    </script>
+</body>
+</html>
