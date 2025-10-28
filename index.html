@@ -1,0 +1,3208 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#000000">
+  <title>Trade Journal Mobile Pro</title>
+  <link href="https://fonts.cdnfonts.com/css/trade-gothic-next" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+  
+  <style>
+    /* POLICE ET VARIABLES MOBILE COMPLET */
+    :root {
+      --font-primary: 'Trade Gothic Next', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      
+      --bg: #000000;
+      --bg-card: #1A1A1A;
+      --fg: #FFFFFF;
+      --muted: #8E8E93;
+      --accent-green: #00C48C;
+      --accent-red: #FF5C63;
+      --accent-blue: #007AFF;
+      --accent-purple: #8B5CF6;
+      --accent-orange: #FF9500;
+      --glass: rgba(30, 30, 30, 0.95);
+      --card-bg: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+      --border: rgba(255,255,255,0.15);
+      --shadow: 0 4px 12px rgba(0,0,0,0.5);
+      --overlay: rgba(0,0,0,0.9);
+      
+      /* Tailles mobiles */
+      --safe-area-inset-top: env(safe-area-inset-top);
+      --safe-area-inset-bottom: env(safe-area-inset-bottom);
+      --safe-area-inset-left: env(safe-area-inset-left);
+      --safe-area-inset-right: env(safe-area-inset-right);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-primary);
+      font-size: 15px;
+      line-height: 1.4;
+      overflow: hidden;
+      position: fixed;
+      width: 100%;
+    }
+
+    /* APP LAYOUT MOBILE COMPLET */
+    .app {
+      height: 100vh;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      padding-top: var(--safe-area-inset-top);
+      padding-bottom: var(--safe-area-inset-bottom);
+      background: var(--bg);
+    }
+
+    /* HEADER MOBILE AVANCÉ */
+    .header {
+      padding: 12px 16px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(20px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header-title {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* BOTTOM NAVIGATION COMPLÈTE */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--bg-card);
+      border-top: 1px solid var(--border);
+      padding: 8px 16px;
+      padding-bottom: calc(8px + var(--safe-area-inset-bottom));
+      display: flex;
+      justify-content: space-around;
+      z-index: 1000;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 8px 12px;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 10px;
+      min-width: 60px;
+    }
+
+    .nav-item.active {
+      color: var(--accent-green);
+    }
+
+    .nav-icon {
+      font-size: 20px;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* MAIN CONTENT AVEC TOUTES LES FONCTIONNALITÉS */
+    .main-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      padding-bottom: 80px;
+    }
+
+    /* CARTES MOBILE AVANCÉES */
+    .card {
+      background: var(--bg-card);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .card-subtitle {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    /* GRID DE MÉTRIQUES COMPLET */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .metric-card {
+      background: var(--card-bg);
+      padding: 16px;
+      border-radius: 12px;
+      text-align: center;
+      border: 1px solid var(--border);
+    }
+
+    .metric-value {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .metric-label {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .metric-positive {
+      color: var(--accent-green);
+    }
+
+    .metric-negative {
+      color: var(--accent-red);
+    }
+
+    /* TRADES LIST COMPLÈTE */
+    .trades-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .trade-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      background: var(--glass);
+      border-radius: 12px;
+      border-left: 4px solid transparent;
+      transition: all 0.2s ease;
+    }
+
+    .trade-item:active {
+      transform: scale(0.98);
+    }
+
+    .trade-item.win {
+      border-left-color: var(--accent-green);
+      background: linear-gradient(90deg, rgba(0,196,140,0.1), transparent);
+    }
+
+    .trade-item.loss {
+      border-left-color: var(--accent-red);
+      background: linear-gradient(90deg, rgba(255,92,99,0.08), transparent);
+    }
+
+    .trade-info {
+      flex: 1;
+    }
+
+    .trade-symbol {
+      font-weight: 700;
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+
+    .trade-details {
+      font-size: 13px;
+      color: var(--muted);
+      display: flex;
+      gap: 12px;
+    }
+
+    .trade-pnl {
+      text-align: right;
+    }
+
+    .trade-amount {
+      font-weight: 700;
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+
+    .trade-percent {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* BOUTONS MOBILE COMPLETS */
+    .btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 16px 20px;
+      border-radius: 12px;
+      color: var(--fg);
+      font-size: 16px;
+      font-weight: 500;
+      text-align: center;
+      width: 100%;
+      margin-bottom: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn.primary {
+      background: linear-gradient(135deg, var(--accent-green), #00E095);
+      color: #000000;
+      border: none;
+      font-weight: 600;
+    }
+
+    .btn.secondary {
+      background: var(--accent-blue);
+      color: white;
+      border: none;
+    }
+
+    .btn.danger {
+      background: var(--accent-red);
+      color: white;
+      border: none;
+    }
+
+    .btn-small {
+      padding: 12px 16px;
+      font-size: 14px;
+      width: auto;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .btn-group .btn {
+      flex: 1;
+      margin-bottom: 0;
+    }
+
+    /* FORMULAIRES MOBILE COMPLETS */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 16px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 16px;
+      border-radius: 12px;
+      color: var(--fg);
+      font-size: 16px;
+      font-family: var(--font-primary);
+    }
+
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none;
+      border-color: var(--accent-green);
+    }
+
+    .form-textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .form-grid-3 {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    /* MODALS MOBILE COMPLETS */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--overlay);
+      display: none;
+      align-items: flex-end;
+      z-index: 2000;
+      backdrop-filter: blur(20px);
+    }
+
+    .modal {
+      width: 100%;
+      background: var(--bg-card);
+      border-radius: 24px 24px 0 0;
+      padding: 24px;
+      padding-bottom: calc(24px + var(--safe-area-inset-bottom));
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .modal-fullscreen {
+      border-radius: 0;
+      height: 100vh;
+      max-height: 100vh;
+    }
+
+    /* TOAST SYSTEM COMPLET */
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      left: 16px;
+      right: 16px;
+      z-index: 3000;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 16px 20px;
+      border-radius: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: slideInDown 0.3s ease;
+      backdrop-filter: blur(20px);
+    }
+
+    .toast.success {
+      border-left: 4px solid var(--accent-green);
+    }
+
+    .toast.error {
+      border-left: 4px solid var(--accent-red);
+    }
+
+    .toast.warning {
+      border-left: 4px solid var(--accent-orange);
+    }
+
+    .toast.info {
+      border-left: 4px solid var(--accent-blue);
+    }
+
+    .toast.fade-out {
+      animation: slideOutUp 0.3s ease forwards;
+    }
+
+    @keyframes slideInDown {
+      from { transform: translateY(-100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    @keyframes slideOutUp {
+      from { transform: translateY(0); opacity: 1; }
+      to { transform: translateY(-100%); opacity: 0; }
+    }
+
+    /* CHART CONTAINERS COMPLETS */
+    .chart-container {
+      height: 200px;
+      margin: 20px 0;
+      position: relative;
+    }
+
+    .chart-fullscreen-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px;
+      color: var(--muted);
+      z-index: 10;
+    }
+
+    /* QUICK ACTIONS GRID */
+    .quick-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    /* HEATMAP STYLES */
+    .heatmap-container {
+      margin: 16px 0;
+    }
+
+    .heatmap {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      justify-items: center;
+    }
+
+    .heat-square {
+      width: 100%;
+      aspect-ratio: 1;
+      max-width: 32px;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .heatmap-legend {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .legend-gradient {
+      flex: 1;
+      height: 8px;
+      margin: 0 12px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, var(--accent-red), rgba(255,255,255,0.1), var(--accent-green));
+    }
+
+    /* ANALYTICS GRIDS */
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    /* TABS SYSTEM */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 16px;
+      text-align: center;
+      border-bottom: 2px solid transparent;
+      font-weight: 500;
+    }
+
+    .tab.active {
+      border-bottom-color: var(--accent-green);
+      color: var(--accent-green);
+    }
+
+    /* SEARCH AND FILTER */
+    .search-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 16px;
+      border-radius: 12px;
+      color: var(--fg);
+      font-size: 16px;
+      width: 100%;
+      margin-bottom: 16px;
+    }
+
+    /* SWIPE INDICATOR */
+    .swipe-indicator {
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 12px;
+    }
+
+    /* LOADING STATES */
+    .loading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .skeleton {
+      background: linear-gradient(90deg, var(--bg-card) 25%, var(--border) 50%, var(--bg-card) 75%);
+      background-size: 200% 100%;
+      animation: loading 1.5s infinite;
+      border-radius: 8px;
+    }
+
+    @keyframes loading {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* UTILITY CLASSES COMPLÈTES */
+    .text-center { text-align: center; }
+    .text-right { text-align: right; }
+    .text-left { text-align: left; }
+    .text-muted { color: var(--muted); }
+    .text-small { font-size: 12px; }
+    .text-large { font-size: 18px; }
+    .text-xlarge { font-size: 24px; }
+    .font-bold { font-weight: 700; }
+    .font-semibold { font-weight: 600; }
+    .mb-8 { margin-bottom: 8px; }
+    .mb-12 { margin-bottom: 12px; }
+    .mb-16 { margin-bottom: 16px; }
+    .mb-20 { margin-bottom: 20px; }
+    .mt-8 { margin-top: 8px; }
+    .mt-12 { margin-top: 12px; }
+    .mt-16 { margin-top: 16px; }
+    .mt-20 { margin-top: 20px; }
+    .hidden { display: none !important; }
+    .block { display: block; }
+    .flex { display: flex; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-8 { gap: 8px; }
+    .gap-12 { gap: 12px; }
+    .gap-16 { gap: 16px; }
+    .w-full { width: 100%; }
+
+    /* SCROLLBAR HIDDEN */
+    .main-content::-webkit-scrollbar {
+      display: none;
+    }
+
+    .main-content {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    /* PULL TO REFRESH */
+    .pull-indicator {
+      text-align: center;
+      padding: 16px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="toast-container" id="toastContainer"></div>
+
+  <div class="app">
+    <!-- HEADER DYNAMIQUE -->
+    <header class="header">
+      <div class="header-title" id="viewTitle">Tableau de bord</div>
+      <div class="header-actions">
+        <button class="btn btn-small" id="syncButton" title="Synchroniser">🔄</button>
+        <button class="btn btn-small" id="themeToggle" title="Changer le thème">🌓</button>
+        <button class="btn btn-small" id="menuButton" title="Menu">☰</button>
+      </div>
+    </header>
+
+    <!-- MAIN CONTENT TOUTES FONCTIONNALITÉS -->
+    <main class="main-content" id="mainContent">
+      
+      <!-- VUE TABLEAU DE BORD COMPLÈTE -->
+      <div id="dashboardView">
+        <!-- Indicateur de swipe -->
+        <div class="swipe-indicator">⬅️ Swipe pour naviguer ➡️</div>
+
+        <!-- Carte Capital et Performance -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Capital & Performance</div>
+            <button class="btn btn-small" id="editCapitalBtn">Éditer</button>
+          </div>
+          
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <div class="metric-value text-xlarge">€ <span id="capitalDisplay">--</span></div>
+              <div class="metric-label">Capital Actuel</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value text-xlarge" id="winrate">0%</div>
+              <div class="metric-label">Win Rate</div>
+            </div>
+          </div>
+          
+          <div class="chart-container">
+            <button class="chart-fullscreen-btn" id="equityFullscreenBtn">⛶</button>
+            <canvas id="equityChart"></canvas>
+          </div>
+
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <div class="metric-value metric-positive" id="bestTradeCard">-- €</div>
+              <div class="metric-label">Meilleur Trade</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value metric-negative" id="worstTradeCard">-- €</div>
+              <div class="metric-label">Pire Trade</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions Rapides -->
+        <div class="quick-actions">
+          <button class="btn primary" id="quickTradeBtn">
+            <div>+ Trade</div>
+            <div class="text-small">Rapide</div>
+          </button>
+          <button class="btn secondary" id="importBtn">
+            <div>📥 Import</div>
+            <div class="text-small">CSV/JSON</div>
+          </button>
+          <button class="btn" id="calculatorBtn">
+            <div>🧮 Calcul</div>
+            <div class="text-small">Risk/Reward</div>
+          </button>
+        </div>
+
+        <!-- Métriques Avancées -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Analyses Avancées</div>
+          </div>
+          <div class="analytics-grid">
+            <div class="metric-card">
+              <div class="metric-value" id="profitFactor">--</div>
+              <div class="metric-label">Profit Factor</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value" id="expectancy">--</div>
+              <div class="metric-label">Expectancy</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value" id="maxDrawdown">--</div>
+              <div class="metric-label">Max Drawdown</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value" id="sharpeRatio">--</div>
+              <div class="metric-label">Sharpe Ratio</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value" id="avgWinLossRatio">--</div>
+              <div class="metric-label">Ratio G/P</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-value" id="tradesPerMonth">--</div>
+              <div class="metric-label">Trades/Mois</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Heatmap des Performances -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Calendrier des Performances</div>
+            <div class="text-muted text-small">P&L Quotidien</div>
+          </div>
+          <div class="heatmap-container">
+            <div class="heatmap" id="performanceHeatmap">
+              <!-- Heatmap généré par JS -->
+            </div>
+            <div class="heatmap-legend">
+              <span>Perte</span>
+              <div class="legend-gradient"></div>
+              <span>Profit</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trades Récents -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Trades Récents</div>
+            <div class="btn-group">
+              <button class="btn btn-small" id="viewAllTradesBtn">Tout voir</button>
+              <button class="btn btn-small" id="addQuickTradeBtn">+ Rapide</button>
+            </div>
+          </div>
+          <div class="trades-list" id="recentTradesList">
+            <!-- Trades insérés par JS -->
+          </div>
+        </div>
+
+        <!-- Calculateur Risk/Reward -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Calculateur Risk/Reward</div>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Capital (€)</label>
+              <input type="number" class="form-input" id="rrCapital" placeholder="10000">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Risque (%)</label>
+              <input type="number" class="form-input" id="rrRisk" value="1" step="0.1">
+            </div>
+          </div>
+          <div class="form-grid form-grid-3">
+            <div class="form-group">
+              <label class="form-label">Entry</label>
+              <input type="number" class="form-input" id="rrEntry" value="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Stop</label>
+              <input type="number" class="form-input" id="rrStop" value="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Target</label>
+              <input type="number" class="form-input" id="rrTarget" value="0">
+            </div>
+          </div>
+          <button class="btn primary" id="calculateRRBtn">Calculer</button>
+          <div class="text-center mt-12">
+            <div class="text-muted text-small" id="rrResult">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VUE TRADES COMPLÈTE -->
+      <div id="tradesView" class="hidden">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Gestion des Trades</div>
+            <div class="btn-group">
+              <button class="btn btn-small primary" id="newTradeBtn">+ Nouveau</button>
+              <button class="btn btn-small" id="exportTradesBtn">Exporter</button>
+            </div>
+          </div>
+
+          <input type="text" class="search-box" id="tradesSearch" placeholder="🔍 Rechercher symbole, commentaire...">
+
+          <div class="tabs">
+            <div class="tab active" data-tab="all">Tous</div>
+            <div class="tab" data-tab="open">Ouverts</div>
+            <div class="tab" data-tab="closed">Fermés</div>
+            <div class="tab" data-tab="wins">Gagnants</div>
+          </div>
+
+          <div class="trades-list" id="allTradesList">
+            <!-- Trades insérés par JS -->
+          </div>
+
+          <div class="text-center mt-16">
+            <div class="text-muted" id="tradesCount">0 trades</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VUE ANALYTICS COMPLÈTE -->
+      <div id="analyticsView" class="hidden">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Analyses Détaillées</div>
+            <button class="btn btn-small" id="refreshAnalyticsBtn">🔄</button>
+          </div>
+
+          <div class="tabs">
+            <div class="tab active" data-tab="overview">Vue d'ensemble</div>
+            <div class="tab" data-tab="performance">Performance</div>
+            <div class="tab" data-tab="distribution">Distribution</div>
+          </div>
+
+          <!-- Vue d'ensemble -->
+          <div id="analyticsOverview">
+            <div class="analytics-grid">
+              <div class="metric-card">
+                <div class="metric-value" id="analyticsWinrate">--</div>
+                <div class="metric-label">Win Rate</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-value" id="analyticsProfitFactor">--</div>
+                <div class="metric-label">Profit Factor</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-value" id="analyticsExpectancy">--</div>
+                <div class="metric-label">Expectancy</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-value" id="analyticsMaxDrawdown">--</div>
+                <div class="metric-label">Max Drawdown</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-value" id="analyticsSharpeRatio">--</div>
+                <div class="metric-label">Sharpe Ratio</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-value" id="analyticsBestStreak">--</div>
+                <div class="metric-label">Best Streak</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-value" id="analyticsAvgDuration">--</div>
+                <div class="metric-label">Durée Moy.</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-value" id="analyticsWinConsistency">--</div>
+                <div class="metric-label">Consistance</div>
+              </div>
+            </div>
+
+            <div class="chart-container">
+              <canvas id="monthlyPerformanceChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Performance par symbole -->
+          <div id="analyticsPerformance" class="hidden">
+            <div class="chart-container">
+              <canvas id="symbolPerformanceChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Distribution -->
+          <div id="analyticsDistribution" class="hidden">
+            <div class="chart-container">
+              <canvas id="pnlDistributionChart"></canvas>
+            </div>
+            <div class="chart-container">
+              <canvas id="timeDistributionChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VUE IMPORT/EXPORT COMPLÈTE -->
+      <div id="importView" class="hidden">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Import / Export</div>
+          </div>
+
+          <div class="btn-group">
+            <button class="btn primary" id="importCSVBtn">📥 Import CSV</button>
+            <button class="btn secondary" id="importJSONBtn">📥 Import JSON</button>
+          </div>
+
+          <div class="btn-group">
+            <button class="btn" id="exportCSVBtn">📤 Export CSV</button>
+            <button class="btn" id="exportJSONBtn">📤 Export JSON</button>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Fichier CSV/JSON</label>
+            <input type="file" class="form-input" id="fileInput" accept=".csv,.json">
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Sauvegarde Cloud</div>
+            </div>
+            <div id="cloudStatus" class="text-muted mb-16">Non connecté</div>
+            <div class="btn-group">
+              <button class="btn primary" id="backupCloudBtn">Sauvegarder Cloud</button>
+              <button class="btn" id="restoreCloudBtn">Restaurer Cloud</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VUE PARAMÈTRES COMPLÈTE -->
+      <div id="settingsView" class="hidden">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Paramètres</div>
+          </div>
+
+          <div id="userSection">
+            <div class="form-group">
+              <label class="form-label">Compte Utilisateur</label>
+              <div id="guestView">
+                <div class="text-center mb-16">
+                  <div class="text-muted mb-12">Connectez-vous pour synchroniser vos données</div>
+                  <div class="btn-group">
+                    <button class="btn primary" id="loginBtn">Se connecter</button>
+                    <button class="btn" id="signupBtn">Créer un compte</button>
+                  </div>
+                </div>
+              </div>
+
+              <div id="userView" class="hidden">
+                <div class="text-center mb-16">
+                  <div class="font-bold mb-8" id="userEmail"></div>
+                  <div class="text-muted text-small mb-12" id="lastSync"></div>
+                  <button class="btn danger" id="logoutBtn">Déconnexion</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Capital Initial</label>
+            <input type="number" class="form-input" id="capitalInput" placeholder="10000" step="100">
+            <div class="text-muted text-small mt-8">Capital de départ pour les calculs de performance</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Devise</label>
+            <select class="form-select" id="currencySelect">
+              <option value="€">Euro (€)</option>
+              <option value="$">Dollar ($)</option>
+              <option value="£">Livre (£)</option>
+              <option value="CHF">Franc Suisse (CHF)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Fuseau Horaire</label>
+            <select class="form-select" id="timezoneSelect">
+              <option value="Europe/Paris">Europe/Paris</option>
+              <option value="UTC">UTC</option>
+              <option value="America/New_York">America/New_York</option>
+              <option value="Asia/Tokyo">Asia/Tokyo</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              <input type="checkbox" id="autoSyncCheckbox"> Synchronisation automatique
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              <input type="checkbox" id="notificationsCheckbox"> Notifications
+            </label>
+          </div>
+
+          <button class="btn primary" id="saveSettingsBtn">Sauvegarder les paramètres</button>
+
+          <div class="mt-20">
+            <button class="btn danger" id="clearDataBtn">🗑️ Supprimer toutes les données</button>
+            <div class="text-muted text-small mt-8">Attention: Cette action est irréversible</div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- BOTTOM NAVIGATION COMPLÈTE -->
+    <nav class="bottom-nav">
+      <button class="nav-item active" data-view="dashboard">
+        <div class="nav-icon">📊</div>
+        <div>Dashboard</div>
+      </button>
+      <button class="nav-item" data-view="trades">
+        <div class="nav-icon">📈</div>
+        <div>Trades</div>
+      </button>
+      <button class="nav-item" data-view="analytics">
+        <div class="nav-icon">📉</div>
+        <div>Analytics</div>
+      </button>
+      <button class="nav-item" data-view="import">
+        <div class="nav-icon">📥</div>
+        <div>Import</div>
+      </button>
+      <button class="nav-item" data-view="settings">
+        <div class="nav-icon">⚙️</div>
+        <div>Settings</div>
+      </button>
+    </nav>
+  </div>
+
+  <!-- MODAL TRADE COMPLET -->
+  <div class="modal-backdrop" id="tradeModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="tradeModalTitle">Nouveau Trade</div>
+        <button class="btn btn-small" id="closeTradeModal">✕</button>
+      </div>
+      
+      <form id="tradeForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Symbole *</label>
+            <input type="text" class="form-input" id="symbolInput" placeholder="BTC, ETH..." required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Market</label>
+            <select class="form-select" id="marketInput">
+              <option value="spot">Spot</option>
+              <option value="futures">Futures</option>
+              <option value="margin">Margin</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Side *</label>
+            <select class="form-select" id="sideInput" required>
+              <option value="long">Long</option>
+              <option value="short">Short</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Size *</label>
+            <input type="number" class="form-input" id="sizeInput" value="1" step="0.1" required>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Prix Entry *</label>
+            <input type="number" class="form-input" id="entryInput" step="0.01" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Prix Exit</label>
+            <input type="number" class="form-input" id="exitInput" step="0.01" placeholder="Laisser vide si ouvert">
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Frais</label>
+            <input type="number" class="form-input" id="feesInput" value="0" step="0.01">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Taxes</label>
+            <input type="number" class="form-input" id="taxesInput" value="0" step="0.01">
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Date Entry</label>
+            <input type="datetime-local" class="form-input" id="entryDateInput">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date Exit</label>
+            <input type="datetime-local" class="form-input" id="exitDateInput">
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Confiance (0-100)</label>
+            <input type="number" class="form-input" id="confidenceInput" value="50" min="0" max="100">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Score (0-100)</label>
+            <input type="number" class="form-input" id="scoreInput" value="80" min="0" max="100">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Fuseau Horaire</label>
+          <select class="form-select" id="timezoneInput">
+            <option value="Europe/Paris">Europe/Paris</option>
+            <option value="UTC">UTC</option>
+            <option value="America/New_York">America/New_York</option>
+            <option value="Asia/Tokyo">Asia/Tokyo</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Commentaire</label>
+          <textarea class="form-textarea" id="commentInput" placeholder="Notes sur le trade, stratégie, émotions..."></textarea>
+        </div>
+
+        <div class="btn-group">
+          <button type="button" class="btn" id="setEntryNowBtn">Maintenant Entry</button>
+          <button type="button" class="btn" id="setExitNowBtn">Maintenant Exit</button>
+          <button type="button" class="btn" id="markBackfillBtn">Rétroactif</button>
+        </div>
+
+        <div class="btn-group">
+          <button type="button" class="btn danger" id="deleteTradeBtn" style="display: none;">Supprimer</button>
+          <button type="submit" class="btn primary" id="saveTradeBtn">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL AUTHENTIFICATION COMPLET -->
+  <div class="modal-backdrop" id="authModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="authTitle">Connexion</div>
+        <button class="btn btn-small" id="closeAuthModal">✕</button>
+      </div>
+      
+      <div class="tabs">
+        <div class="tab active" data-tab="login">Connexion</div>
+        <div class="tab" data-tab="signup">Inscription</div>
+      </div>
+      
+      <form id="authForm">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" id="authEmail" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Mot de passe</label>
+          <input type="password" class="form-input" id="authPassword" required minlength="6">
+        </div>
+
+        <div class="form-group" id="confirmPasswordGroup" style="display: none;">
+          <label class="form-label">Confirmer le mot de passe</label>
+          <input type="password" class="form-input" id="confirmPassword" minlength="6">
+        </div>
+
+        <button type="submit" class="btn primary" id="authSubmit">Se connecter</button>
+      </form>
+
+      <div class="text-center mt-20">
+        <div class="text-muted text-small" id="authMessage"></div>
+        <div class="text-muted text-small mt-12">
+          En vous connectant, vos données seront synchronisées sur tous vos appareils
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL PLEIN ÉCRAN POUR GRAPHIQUES -->
+  <div class="modal-backdrop" id="chartModal">
+    <div class="modal modal-fullscreen">
+      <div class="modal-header">
+        <div class="modal-title">Analyses Avancées - Plein écran</div>
+        <button class="btn btn-small" id="closeChartModal">✕</button>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" data-chart="equity">Équity Curve</div>
+        <div class="tab" data-chart="performance">Performance</div>
+        <div class="tab" data-chart="distribution">Distribution</div>
+        <div class="tab" data-chart="heatmap">Heatmap</div>
+      </div>
+
+      <div class="chart-container" style="height: 60vh; margin: 20px 0;">
+        <canvas id="fullscreenChart"></canvas>
+      </div>
+
+      <div class="text-center">
+        <button class="btn btn-small" id="exportChartBtn">📤 Exporter Image</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CONFIRMATION -->
+  <div class="modal-backdrop" id="confirmModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="confirmTitle">Confirmation</div>
+      </div>
+      
+      <div class="text-center mb-20">
+        <div class="text-large mb-12" id="confirmMessage"></div>
+        <div class="btn-group">
+          <button class="btn" id="confirmCancelBtn">Annuler</button>
+          <button class="btn danger" id="confirmOkBtn">Confirmer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ========== CONFIGURATION FIREBASE ==========
+    const firebaseConfig = {
+      apiKey: "AIzaSyDGfiBOOEZiLZmh7clQlSZAr1W6P6Si8vM",
+      authDomain: "journaltrading-a6bc6.firebaseapp.com",
+      projectId: "journaltrading-a6bc6",
+      storageBucket: "journaltrading-a6bc6.firebasestorage.app",
+      messagingSenderId: "220303277331",
+      appId: "1:220303277331:web:f4251eebd62d3058f82ee6",
+      measurementId: "G-8EEHYVXQS6"
+    };
+
+    // Initialiser Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // ========== ÉTAT GLOBAL COMPLET ==========
+    const AppState = {
+      trades: [],
+      capital: 10000,
+      currentUser: null,
+      currentEditing: null,
+      settings: {
+        currency: '€',
+        timezone: 'Europe/Paris',
+        autoSync: true,
+        notifications: true,
+        theme: 'dark'
+      },
+      
+      getStorageKey() {
+        const userId = this.currentUser ? this.currentUser.uid : 'guest';
+        return `mobile_pro_trades_${userId}`;
+      },
+      
+      getCapitalKey() {
+        const userId = this.currentUser ? this.currentUser.uid : 'guest';
+        return `mobile_pro_capital_${userId}`;
+      },
+
+      getSettingsKey() {
+        const userId = this.currentUser ? this.currentUser.uid : 'guest';
+        return `mobile_pro_settings_${userId}`;
+      },
+      
+      init() {
+        this.loadFromLocal();
+      },
+      
+      loadFromLocal() {
+        try {
+          const storageKey = this.getStorageKey();
+          const capitalKey = this.getCapitalKey();
+          const settingsKey = this.getSettingsKey();
+          
+          const storedTrades = localStorage.getItem(storageKey);
+          const storedCapital = localStorage.getItem(capitalKey);
+          const storedSettings = localStorage.getItem(settingsKey);
+          
+          this.trades = storedTrades ? JSON.parse(storedTrades) : [];
+          this.capital = storedCapital ? parseFloat(storedCapital) : 10000;
+          this.settings = storedSettings ? {...this.settings, ...JSON.parse(storedSettings)} : this.settings;
+          
+          this.trades = this.trades.filter(t => t && t.id && t.symbol);
+          console.log('Données chargées:', this.trades.length, 'trades');
+        } catch (error) {
+          console.error('Error loading data:', error);
+          this.trades = [];
+          this.capital = 10000;
+        }
+      },
+      
+      persistToLocal() {
+        try {
+          const storageKey = this.getStorageKey();
+          const capitalKey = this.getCapitalKey();
+          const settingsKey = this.getSettingsKey();
+          
+          localStorage.setItem(storageKey, JSON.stringify(this.trades));
+          localStorage.setItem(capitalKey, this.capital.toString());
+          localStorage.setItem(settingsKey, JSON.stringify(this.settings));
+          return true;
+        } catch (error) {
+          console.error('Error saving data:', error);
+          return false;
+        }
+      },
+      
+      async syncToCloud() {
+        if (!this.currentUser) {
+          console.log('syncToCloud: Aucun utilisateur connecté');
+          return false;
+        }
+        
+        try {
+          console.log('🔄 Début synchronisation avec', this.trades.length, 'trades');
+          showToast('Synchronisation en cours...', 'info');
+          
+          let successCount = 0;
+          let errorCount = 0;
+          
+          if (!this.trades || this.trades.length === 0) {
+            console.log('Aucun trade à synchroniser');
+            updateSyncStatus('✅ Aucun trade à synchroniser', true);
+            return true;
+          }
+          
+          for (const trade of this.trades) {
+            try {
+              if (!trade.id || !trade.symbol) {
+                console.warn('Trade invalide ignoré:', trade);
+                errorCount++;
+                continue;
+              }
+              
+              const tradeData = {
+                id: trade.id,
+                symbol: trade.symbol || '',
+                side: trade.side || 'long',
+                entry_price: Number(trade.entry_price) || 0,
+                exit_price: trade.exit_price ? Number(trade.exit_price) : null,
+                size: Number(trade.size) || 0,
+                fees: Number(trade.fees) || 0,
+                taxes: Number(trade.taxes) || 0,
+                entry_timestamp: trade.entry_timestamp || new Date().toISOString(),
+                exit_timestamp: trade.exit_timestamp || null,
+                confidence: Number(trade.confidence) || 50,
+                score: Number(trade.score) || 50,
+                comment: trade.comment || '',
+                market: trade.market || 'spot',
+                timezone: trade.timezone || 'Europe/Paris',
+                userId: this.currentUser.uid,
+                updated_at: firebase.firestore.FieldValue.serverTimestamp()
+              };
+              
+              if (trade.notional) tradeData.notional = Number(trade.notional);
+              if (trade.computed_pnl !== undefined && trade.computed_pnl !== null) {
+                tradeData.computed_pnl = Number(trade.computed_pnl);
+              }
+              if (trade.duration_seconds) tradeData.duration_seconds = Number(trade.duration_seconds);
+              
+              console.log(`📤 Synchronisation de ${trade.symbol}...`);
+              
+              const tradeRef = db.collection('trades').doc(trade.id);
+              await tradeRef.set(tradeData, { merge: true });
+              
+              successCount++;
+              console.log(`✅ ${trade.symbol} synchronisé`);
+              
+            } catch (error) {
+              console.error(`❌ Erreur sur ${trade.symbol}:`, error);
+              errorCount++;
+            }
+          }
+          
+          console.log(`📊 Synchronisation terminée: ${successCount} réussis, ${errorCount} erreurs`);
+          
+          if (successCount > 0) {
+            const message = `${successCount} trade(s) synchronisé(s)`;
+            updateSyncStatus(`✅ ${message}`, true);
+            
+            if (errorCount > 0) {
+              showToast(`${message}, ${errorCount} erreur(s)`, 'warning');
+            } else {
+              showToast('Synchronisation réussie !', 'success');
+            }
+            return true;
+          } else {
+            throw new Error(`Aucun trade synchronisé (${errorCount} erreurs)`);
+          }
+          
+        } catch (error) {
+          console.error('💥 Erreur générale de synchronisation:', error);
+          updateSyncStatus('❌ Sync échouée', false);
+          showToast('Erreur: ' + error.message, 'error');
+          return false;
+        }
+      },
+      
+      async loadFromCloud() {
+        if (!this.currentUser) {
+          console.log('loadFromCloud: Aucun utilisateur connecté');
+          return false;
+        }
+        
+        try {
+          console.log('📥 Chargement depuis le cloud...');
+          
+          const snapshot = await db.collection('trades')
+            .where('userId', '==', this.currentUser.uid)
+            .orderBy('updated_at', 'desc')
+            .get();
+          
+          console.log(`${snapshot.size} trades trouvés dans le cloud`);
+          
+          if (snapshot.empty) {
+            console.log('Aucun trade dans le cloud');
+            return true;
+          }
+          
+          const cloudTrades = [];
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            if (data.updated_at && typeof data.updated_at.toDate === 'function') {
+              data.updated_at = data.updated_at.toDate().toISOString();
+            }
+            cloudTrades.push(data);
+          });
+          
+          const beforeCount = this.trades.length;
+          this.mergeTrades(cloudTrades);
+          const afterCount = this.trades.length;
+          
+          console.log(`🔄 Fusion: ${beforeCount} -> ${afterCount} trades`);
+          
+          this.persistToLocal();
+          
+          showToast(`${cloudTrades.length} trades chargés du cloud`, 'success');
+          return true;
+          
+        } catch (error) {
+          console.error('❌ Erreur loadFromCloud:', error);
+          showToast('Erreur chargement cloud: ' + error.message, 'error');
+          return false;
+        }
+      },
+      
+      mergeTrades(cloudTrades) {
+        const tradeMap = new Map();
+        
+        cloudTrades.forEach(cloudTrade => {
+          tradeMap.set(cloudTrade.id, { ...cloudTrade, source: 'cloud' });
+        });
+        
+        this.trades.forEach(localTrade => {
+          const existing = tradeMap.get(localTrade.id);
+          if (!existing) {
+            tradeMap.set(localTrade.id, { ...localTrade, source: 'local' });
+          } else {
+            const localUpdated = new Date(localTrade.updated_at || localTrade.entry_timestamp || 0);
+            const cloudUpdated = new Date(existing.updated_at || existing.entry_timestamp || 0);
+            
+            if (localUpdated > cloudUpdated) {
+              tradeMap.set(localTrade.id, { ...localTrade, source: 'local' });
+            }
+          }
+        });
+        
+        this.trades = Array.from(tradeMap.values());
+      }
+    };
+
+    // ========== FONCTIONS UTILITAIRES COMPLÈTES ==========
+    function showToast(message, type = 'info', duration = 4000) {
+      const toastContainer = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      
+      const icons = {
+        success: '✅',
+        error: '❌',
+        warning: '⚠️',
+        info: '💡'
+      };
+      
+      toast.innerHTML = `
+        <div class="toast-icon">${icons[type] || icons.info}</div>
+        <div class="toast-message">${message}</div>
+      `;
+      
+      toastContainer.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.classList.add('fade-out');
+        setTimeout(() => {
+          if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+          }
+        }, 300);
+      }, duration);
+      
+      return toast;
+    }
+
+    function showAlert(message, type = 'info') {
+      return showToast(message, type, 5000);
+    }
+
+    function cryptoRandomId(){ 
+      return 'mp_'+Math.random().toString(36).slice(2,10) + '_' + Date.now().toString(36); 
+    }
+
+    function computePnL(tr){ 
+      if(!tr || tr.exit_price == null || tr.entry_price == null || tr.size == null) return null; 
+      if(tr.entry_price <= 0 || tr.size <= 0) return null;
+      
+      let pnl;
+      if(tr.side === 'long') {
+        pnl = (tr.exit_price - tr.entry_price) * tr.size - (tr.fees || 0) - (tr.taxes || 0);
+      } else {
+        pnl = (tr.entry_price - tr.exit_price) * tr.size - (tr.fees || 0) - (tr.taxes || 0);
+      }
+      return parseFloat(pnl.toFixed(2));
+    }
+    
+    function safeDateParse(dateString) {
+      if (!dateString) return null;
+      const date = new Date(dateString);
+      return isNaN(date.getTime()) ? null : date;
+    }
+    
+    function calculateDuration(entryTimestamp, exitTimestamp) {
+      if (!entryTimestamp || !exitTimestamp) return null;
+      const entry = safeDateParse(entryTimestamp);
+      const exit = safeDateParse(exitTimestamp);
+      if (!entry || !exit) return null;
+      return Math.floor((exit - entry) / 1000);
+    }
+    
+    function validateTrade(t) {
+      const errors = [];
+      
+      if (!t.symbol || t.symbol.trim() === '') {
+        errors.push('Le symbole est requis');
+      }
+      if (!t.entry_price || t.entry_price <= 0) {
+        errors.push('Le prix d\'entrée doit être positif');
+      }
+      if (!t.size || t.size <= 0) {
+        errors.push('La taille doit être positive');
+      }
+      if (t.side !== 'long' && t.side !== 'short') {
+        errors.push('Le side doit être "long" ou "short"');
+      }
+      
+      if (errors.length > 0) {
+        throw new Error(errors.join(', '));
+      }
+      return true;
+    }
+
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
+    }
+
+    // ========== CALCULS ANALYTICS COMPLETS ==========
+    function calculateAdvancedMetrics() {
+      const closedTrades = AppState.trades.filter(t => computePnL(t) !== null);
+      if (closedTrades.length === 0) return {};
+      
+      const winningTrades = closedTrades.filter(t => computePnL(t) > 0);
+      const losingTrades = closedTrades.filter(t => computePnL(t) < 0);
+      
+      // Profit Factor
+      const totalProfit = winningTrades.reduce((sum, t) => sum + computePnL(t), 0);
+      const totalLoss = Math.abs(losingTrades.reduce((sum, t) => sum + computePnL(t), 0));
+      const profitFactor = totalLoss > 0 ? (totalProfit / totalLoss) : totalProfit > 0 ? Infinity : 0;
+      
+      // Expectancy
+      const avgWin = winningTrades.length > 0 ? totalProfit / winningTrades.length : 0;
+      const avgLoss = losingTrades.length > 0 ? totalLoss / losingTrades.length : 0;
+      const winRate = winningTrades.length / closedTrades.length;
+      const expectancy = (winRate * avgWin) - ((1 - winRate) * avgLoss);
+      
+      // Max Drawdown
+      let maxDrawdown = 0;
+      let peak = AppState.capital || 0;
+      let equity = AppState.capital || 0;
+      
+      closedTrades.sort((a, b) => new Date(a.exit_timestamp || a.entry_timestamp) - new Date(b.exit_timestamp || b.entry_timestamp));
+      
+      closedTrades.forEach(trade => {
+        equity += computePnL(trade);
+        if (equity > peak) peak = equity;
+        const drawdown = ((peak - equity) / peak) * 100;
+        if (drawdown > maxDrawdown) maxDrawdown = drawdown;
+      });
+      
+      // Ratio Gain/Perte
+      const avgWinLossRatio = avgLoss > 0 ? avgWin / avgLoss : avgWin > 0 ? Infinity : 0;
+      
+      // Sharpe Ratio (simplifié)
+      const returns = closedTrades.map(t => computePnL(t) / (t.entry_price * t.size));
+      const avgReturn = returns.reduce((a, b) => a + b, 0) / returns.length;
+      const stdDev = Math.sqrt(returns.map(r => Math.pow(r - avgReturn, 2)).reduce((a, b) => a + b, 0) / returns.length);
+      const sharpeRatio = stdDev > 0 ? avgReturn / stdDev : 0;
+      
+      // Volatilité Mensuelle
+      const monthlyReturns = calculateMonthlyReturns(closedTrades);
+      const monthlyVolatility = calculateVolatility(monthlyReturns);
+      
+      // Autres métriques
+      const durations = closedTrades.map(t => calculateDuration(t.entry_timestamp, t.exit_timestamp) || 0).filter(d => d > 0);
+      const avgDuration = durations.length > 0 ? durations.reduce((a, b) => a + b, 0) / durations.length / (24 * 3600) : 0;
+      
+      const tradesByMonth = groupTradesByMonth(closedTrades);
+      const tradesPerMonth = Object.values(tradesByMonth).reduce((a, b) => a + b, 0) / Math.max(Object.keys(tradesByMonth).length, 1);
+      
+      // Consistance des gains
+      const monthlyPnL = calculateMonthlyPnL(closedTrades);
+      const profitableMonths = Object.values(monthlyPnL).filter(pnl => pnl > 0).length;
+      const winConsistency = (profitableMonths / Math.max(Object.keys(monthlyPnL).length, 1)) * 100;
+      
+      // Performance par side
+      const longTrades = closedTrades.filter(t => t.side === 'long');
+      const shortTrades = closedTrades.filter(t => t.side === 'short');
+      const longPerformance = longTrades.reduce((sum, t) => sum + computePnL(t), 0);
+      const shortPerformance = shortTrades.reduce((sum, t) => sum + computePnL(t), 0);
+      
+      // Best série de gains
+      const bestWinStreak = calculateBestWinStreak(closedTrades);
+      
+      // Best/Worst trades
+      const bestTrade = closedTrades.length > 0 ? Math.max(...closedTrades.map(t => computePnL(t))) : 0;
+      const worstTrade = closedTrades.length > 0 ? Math.min(...closedTrades.map(t => computePnL(t))) : 0;
+      
+      return {
+        profitFactor: profitFactor.toFixed(2),
+        expectancy: expectancy.toFixed(2),
+        maxDrawdown: maxDrawdown.toFixed(2) + '%',
+        avgWinLossRatio: avgWinLossRatio.toFixed(2),
+        sharpeRatio: sharpeRatio.toFixed(2),
+        monthlyVolatility: (monthlyVolatility * 100).toFixed(2) + '%',
+        avgDuration: avgDuration.toFixed(1),
+        tradesPerMonth: tradesPerMonth.toFixed(1),
+        winConsistency: winConsistency.toFixed(1) + '%',
+        longPerformance: longPerformance.toFixed(2) + ' €',
+        shortPerformance: shortPerformance.toFixed(2) + ' €',
+        bestWinStreak: bestWinStreak,
+        bestTrade: bestTrade.toFixed(2) + ' €',
+        worstTrade: worstTrade.toFixed(2) + ' €',
+        winRate: (winRate * 100).toFixed(1) + '%'
+      };
+    }
+    
+    function calculateMonthlyReturns(trades) {
+      const monthly = {};
+      trades.forEach(trade => {
+        const date = new Date(trade.exit_timestamp || trade.entry_timestamp);
+        const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+        if (!monthly[monthKey]) monthly[monthKey] = [];
+        monthly[monthKey].push(computePnL(trade) / (trade.entry_price * trade.size));
+      });
+      
+      return Object.values(monthly).map(returns => 
+        returns.reduce((a, b) => a + b, 0) / returns.length
+      );
+    }
+    
+    function calculateVolatility(returns) {
+      if (returns.length < 2) return 0;
+      const avgReturn = returns.reduce((a, b) => a + b, 0) / returns.length;
+      const variance = returns.map(r => Math.pow(r - avgReturn, 2)).reduce((a, b) => a + b, 0) / returns.length;
+      return Math.sqrt(variance);
+    }
+    
+    function groupTradesByMonth(trades) {
+      const months = {};
+      trades.forEach(trade => {
+        const date = new Date(trade.entry_timestamp);
+        const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+        months[monthKey] = (months[monthKey] || 0) + 1;
+      });
+      return months;
+    }
+    
+    function calculateMonthlyPnL(trades) {
+      const monthly = {};
+      trades.forEach(trade => {
+        const date = new Date(trade.exit_timestamp || trade.entry_timestamp);
+        const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+        monthly[monthKey] = (monthly[monthKey] || 0) + computePnL(trade);
+      });
+      return monthly;
+    }
+    
+    function calculateBestWinStreak(trades) {
+      let currentStreak = 0;
+      let bestStreak = 0;
+      
+      trades.sort((a, b) => new Date(a.exit_timestamp || a.entry_timestamp) - new Date(b.exit_timestamp || b.entry_timestamp));
+      
+      trades.forEach(trade => {
+        const pnl = computePnL(trade);
+        if (pnl > 0) {
+          currentStreak++;
+          bestStreak = Math.max(bestStreak, currentStreak);
+        } else if (pnl < 0) {
+          currentStreak = 0;
+        }
+      });
+      
+      return bestStreak;
+    }
+
+    // ========== GESTION DE L'UI COMPLÈTE ==========
+    function updateSyncStatus(message, isSuccess = true) {
+      const cloudStatus = document.getElementById('cloudStatus');
+      if (cloudStatus) {
+        cloudStatus.textContent = message;
+        cloudStatus.style.color = isSuccess ? 'var(--accent-green)' : 'var(--accent-red)';
+      }
+      
+      const lastSync = document.getElementById('lastSync');
+      if (lastSync && isSuccess) {
+        lastSync.textContent = `Dernière sync: ${new Date().toLocaleTimeString()}`;
+      }
+    }
+    
+    function updateUIForUser() {
+      const guestView = document.getElementById('guestView');
+      const userView = document.getElementById('userView');
+      
+      if (AppState.currentUser) {
+        guestView.classList.add('hidden');
+        userView.classList.remove('hidden');
+        document.getElementById('userEmail').textContent = AppState.currentUser.email;
+        updateSyncStatus('✅ Connecté • Synchronisation activée', true);
+      } else {
+        guestView.classList.remove('hidden');
+        userView.classList.add('hidden');
+        updateSyncStatus('⚡ Mode hors ligne • Données locales', false);
+      }
+    }
+
+    // ========== RENDU UI COMPLET ==========
+    function renderTrades() {
+      const recentList = document.getElementById('recentTradesList');
+      const allList = document.getElementById('allTradesList');
+      
+      const recentTrades = AppState.trades.slice(0, 10);
+      const allTrades = AppState.trades;
+      
+      function createTradeElement(trade) {
+        const pnl = computePnL(trade);
+        const element = document.createElement('div');
+        element.className = `trade-item ${pnl > 0 ? 'win' : pnl < 0 ? 'loss' : ''}`;
+        element.onclick = () => openTradeModal(trade);
+        
+        const pnlPercent = pnl === null ? '—' : 
+          ((pnl / (trade.entry_price * trade.size)) * 100).toFixed(2) + '%';
+        
+        element.innerHTML = `
+          <div class="trade-info">
+            <div class="trade-symbol">${trade.symbol} • ${trade.side.toUpperCase()}</div>
+            <div class="trade-details">
+              <span>${trade.size} @ ${trade.entry_price}</span>
+              ${trade.comment ? `<span>💬</span>` : ''}
+            </div>
+          </div>
+          <div class="trade-pnl">
+            <div class="trade-amount">${pnl === null ? 'OUVERT' : (pnl >= 0 ? '+' : '') + pnl.toFixed(2)} €</div>
+            <div class="trade-percent">${pnlPercent}</div>
+          </div>
+        `;
+        
+        return element;
+      }
+      
+      // Rendre les trades récents
+      recentList.innerHTML = '';
+      if (recentTrades.length === 0) {
+        recentList.innerHTML = '<div class="text-center text-muted">Aucun trade enregistré</div>';
+      } else {
+        recentTrades.forEach(trade => {
+          recentList.appendChild(createTradeElement(trade));
+        });
+      }
+      
+      // Rendre tous les trades
+      allList.innerHTML = '';
+      if (allTrades.length === 0) {
+        allList.innerHTML = '<div class="text-center text-muted">Aucun trade enregistré</div>';
+      } else {
+        allTrades.forEach(trade => {
+          allList.appendChild(createTradeElement(trade));
+        });
+      }
+      
+      // Mettre à jour le compteur
+      document.getElementById('tradesCount').textContent = `${allTrades.length} trades`;
+    }
+    
+    function renderMetrics() {
+      const metrics = calculateAdvancedMetrics();
+      const capital = AppState.capital + AppState.trades
+        .filter(t => computePnL(t) !== null)
+        .reduce((sum, t) => sum + computePnL(t), 0);
+      
+      // Mettre à jour les métriques de base
+      document.getElementById('capitalDisplay').textContent = capital.toFixed(2);
+      document.getElementById('winrate').textContent = metrics.winRate || '0%';
+      document.getElementById('bestTradeCard').textContent = metrics.bestTrade || '-- €';
+      document.getElementById('worstTradeCard').textContent = metrics.worstTrade || '-- €';
+      
+      // Métriques avancées dashboard
+      document.getElementById('profitFactor').textContent = metrics.profitFactor || '--';
+      document.getElementById('expectancy').textContent = metrics.expectancy || '--';
+      document.getElementById('maxDrawdown').textContent = metrics.maxDrawdown || '--';
+      document.getElementById('sharpeRatio').textContent = metrics.sharpeRatio || '--';
+      document.getElementById('avgWinLossRatio').textContent = metrics.avgWinLossRatio || '--';
+      document.getElementById('tradesPerMonth').textContent = metrics.tradesPerMonth || '--';
+      
+      // Métriques analytics
+      document.getElementById('analyticsWinrate').textContent = metrics.winRate || '--';
+      document.getElementById('analyticsProfitFactor').textContent = metrics.profitFactor || '--';
+      document.getElementById('analyticsExpectancy').textContent = metrics.expectancy || '--';
+      document.getElementById('analyticsMaxDrawdown').textContent = metrics.maxDrawdown || '--';
+      document.getElementById('analyticsSharpeRatio').textContent = metrics.sharpeRatio || '--';
+      document.getElementById('analyticsBestStreak').textContent = metrics.bestWinStreak || '--';
+      document.getElementById('analyticsAvgDuration').textContent = metrics.avgDuration || '--';
+      document.getElementById('analyticsWinConsistency').textContent = metrics.winConsistency || '--';
+    }
+    
+    function renderUserInfo() {
+      updateUIForUser();
+      
+      // Mettre à jour les paramètres
+      document.getElementById('capitalInput').value = AppState.capital;
+      document.getElementById('currencySelect').value = AppState.settings.currency;
+      document.getElementById('timezoneSelect').value = AppState.settings.timezone;
+      document.getElementById('autoSyncCheckbox').checked = AppState.settings.autoSync;
+      document.getElementById('notificationsCheckbox').checked = AppState.settings.notifications;
+    }
+    
+    function renderAll() {
+      renderTrades();
+      renderMetrics();
+      renderUserInfo();
+      updateChart();
+      initAnalyticsCharts();
+      renderHeatmap();
+    }
+
+    // ========== GRAPHIQUES COMPLETS ==========
+    let equityChart = null;
+    let monthlyPerformanceChart = null;
+    let symbolPerformanceChart = null;
+    let pnlDistributionChart = null;
+    let timeDistributionChart = null;
+    let fullscreenChart = null;
+    
+    function initChart() {
+      const ctx = document.getElementById('equityChart');
+      if (!ctx) return;
+      
+      equityChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [{
+            label: 'Equity',
+            data: [],
+            borderColor: '#00C48C',
+            backgroundColor: 'rgba(0, 196, 140, 0.1)',
+            fill: true,
+            tension: 0.4,
+            borderWidth: 3,
+            pointRadius: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { display: false },
+            y: { display: false }
+          },
+          interaction: { intersect: false }
+        }
+      });
+    }
+    
+    function updateChart() {
+      if (!equityChart) return;
+      
+      const closed = AppState.trades.filter(t => computePnL(t) !== null)
+        .sort((a, b) => new Date(a.exit_timestamp || a.entry_timestamp) - new Date(b.exit_timestamp || b.entry_timestamp));
+      
+      let equity = AppState.capital;
+      const data = [equity];
+      const labels = ['Start'];
+      
+      closed.forEach(trade => {
+        equity += computePnL(trade);
+        data.push(equity);
+        const date = new Date(trade.exit_timestamp || trade.entry_timestamp);
+        labels.push(date.toLocaleDateString('fr-FR'));
+      });
+      
+      equityChart.data.labels = labels;
+      equityChart.data.datasets[0].data = data;
+      equityChart.update();
+    }
+    
+    function initAnalyticsCharts() {
+      // Chart Performance Mensuelle
+      const monthlyCtx = document.getElementById('monthlyPerformanceChart');
+      if (monthlyCtx) {
+        const closed = AppState.trades.filter(t => computePnL(t) !== null);
+        const monthlyPnL = {};
+        
+        closed.forEach(trade => {
+          const date = new Date(trade.exit_timestamp || trade.entry_timestamp);
+          const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+          monthlyPnL[monthKey] = (monthlyPnL[monthKey] || 0) + computePnL(trade);
+        });
+        
+        const months = Object.keys(monthlyPnL).sort();
+        const pnls = months.map(month => monthlyPnL[month]);
+        
+        if (monthlyPerformanceChart) {
+          monthlyPerformanceChart.destroy();
+        }
+        
+        monthlyPerformanceChart = new Chart(monthlyCtx, {
+          type: 'bar',
+          data: {
+            labels: months,
+            datasets: [{
+              label: 'P&L Mensuel',
+              data: pnls,
+              backgroundColor: pnls.map(pnl => pnl >= 0 ? '#00C48C' : '#FF5C63')
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { display: true, ticks: { maxRotation: 0 } },
+              y: { display: true }
+            }
+          }
+        });
+      }
+      
+      // Chart Performance par Symbole
+      const symbolCtx = document.getElementById('symbolPerformanceChart');
+      if (symbolCtx) {
+        const closed = AppState.trades.filter(t => computePnL(t) !== null);
+        const symbolData = {};
+        
+        closed.forEach(trade => {
+          if (!symbolData[trade.symbol]) symbolData[trade.symbol] = 0;
+          symbolData[trade.symbol] += computePnL(trade);
+        });
+        
+        const symbols = Object.keys(symbolData).slice(0, 8);
+        const profits = symbols.map(symbol => symbolData[symbol]);
+        
+        if (symbolPerformanceChart) {
+          symbolPerformanceChart.destroy();
+        }
+        
+        symbolPerformanceChart = new Chart(symbolCtx, {
+          type: 'bar',
+          data: {
+            labels: symbols,
+            datasets: [{
+              data: profits,
+              backgroundColor: profits.map(p => p >= 0 ? '#00C48C' : '#FF5C63')
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { display: true },
+              y: { display: true }
+            }
+          }
+        });
+      }
+      
+      // Chart Distribution P&L
+      const distCtx = document.getElementById('pnlDistributionChart');
+      if (distCtx) {
+        const closed = AppState.trades.filter(t => computePnL(t) !== null);
+        const pnls = closed.map(t => computePnL(t));
+        
+        if (pnls.length > 0) {
+          const minPnl = Math.min(...pnls);
+          const maxPnl = Math.max(...pnls);
+          const range = maxPnl - minPnl;
+          const binCount = Math.min(10, Math.ceil(Math.sqrt(closed.length)));
+          const binSize = range / binCount;
+          
+          const bins = Array(binCount).fill(0);
+          pnls.forEach(pnl => {
+            const binIndex = Math.min(Math.floor((pnl - minPnl) / binSize), binCount - 1);
+            bins[binIndex]++;
+          });
+          
+          const labels = Array.from({length: binCount}, (_, i) => {
+            const start = minPnl + (i * binSize);
+            const end = start + binSize;
+            return `${start.toFixed(0)}-${end.toFixed(0)}`;
+          });
+          
+          if (pnlDistributionChart) {
+            pnlDistributionChart.destroy();
+          }
+          
+          pnlDistributionChart = new Chart(distCtx, {
+            type: 'bar',
+            data: {
+              labels: labels,
+              datasets: [{
+                label: 'Nombre de trades',
+                data: bins,
+                backgroundColor: '#007AFF'
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                x: { display: true, title: { display: true, text: 'P&L (€)' } },
+                y: { display: true, title: { display: true, text: 'Fréquence' } }
+              }
+            }
+          });
+        }
+      }
+    }
+
+    // ========== HEATMAP DES PERFORMANCES ==========
+    function renderHeatmap() {
+      const heatmap = document.getElementById('performanceHeatmap');
+      if (!heatmap) return;
+      
+      heatmap.innerHTML = '';
+      
+      // Générer des données exemple pour le heatmap
+      for (let i = 0; i < 35; i++) {
+        const square = document.createElement('div');
+        square.className = 'heat-square';
+        
+        // Générer une performance aléatoire pour la démo
+        const performance = Math.random() * 2 - 1; // -1 à 1
+        const intensity = Math.abs(performance);
+        
+        if (performance > 0) {
+          // Vert pour les gains
+          square.style.background = `rgba(0, 196, 140, ${0.3 + intensity * 0.7})`;
+        } else if (performance < 0) {
+          // Rouge pour les pertes
+          square.style.background = `rgba(255, 92, 99, ${0.3 + intensity * 0.7})`;
+        } else {
+          // Gris pour neutre
+          square.style.background = 'rgba(128, 128, 128, 0.3)';
+        }
+        
+        square.textContent = (i + 1).toString();
+        square.setAttribute('data-tooltip', `Jour ${i + 1}: ${(performance * 100).toFixed(1)}%`);
+        
+        heatmap.appendChild(square);
+      }
+    }
+
+    // ========== GESTION DES VUES COMPLÈTE ==========
+    function showView(viewName) {
+      // Cacher toutes les vues
+      document.getElementById('dashboardView').classList.add('hidden');
+      document.getElementById('tradesView').classList.add('hidden');
+      document.getElementById('analyticsView').classList.add('hidden');
+      document.getElementById('importView').classList.add('hidden');
+      document.getElementById('settingsView').classList.add('hidden');
+      
+      // Afficher la vue sélectionnée
+      document.getElementById(viewName + 'View').classList.remove('hidden');
+      
+      // Mettre à jour le titre
+      const titles = {
+        dashboard: 'Tableau de bord',
+        trades: 'Gestion des Trades',
+        analytics: 'Analyses Avancées',
+        import: 'Import / Export',
+        settings: 'Paramètres'
+      };
+      document.getElementById('viewTitle').textContent = titles[viewName];
+      
+      // Mettre à jour la navigation
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      document.querySelector(`[data-view="${viewName}"]`).classList.add('active');
+    }
+
+    // ========== GESTION DES MODALS COMPLÈTE ==========
+    function openTradeModal(trade = null) {
+      const modal = document.getElementById('tradeModal');
+      const form = document.getElementById('tradeForm');
+      const title = document.getElementById('tradeModalTitle');
+      const deleteBtn = document.getElementById('deleteTradeBtn');
+      
+      if (trade) {
+        // Mode édition
+        title.textContent = 'Modifier Trade';
+        deleteBtn.style.display = 'block';
+        
+        // Remplir le formulaire
+        document.getElementById('symbolInput').value = trade.symbol;
+        document.getElementById('marketInput').value = trade.market || 'spot';
+        document.getElementById('sideInput').value = trade.side;
+        document.getElementById('sizeInput').value = trade.size;
+        document.getElementById('entryInput').value = trade.entry_price;
+        document.getElementById('exitInput').value = trade.exit_price || '';
+        document.getElementById('feesInput').value = trade.fees || 0;
+        document.getElementById('taxesInput').value = trade.taxes || 0;
+        document.getElementById('confidenceInput').value = trade.confidence || 50;
+        document.getElementById('scoreInput').value = trade.score || 80;
+        document.getElementById('commentInput').value = trade.comment || '';
+        document.getElementById('timezoneInput').value = trade.timezone || 'Europe/Paris';
+        
+        // Dates
+        if (trade.entry_timestamp) {
+          const entryDate = new Date(trade.entry_timestamp);
+          document.getElementById('entryDateInput').value = entryDate.toISOString().slice(0, 16);
+        }
+        if (trade.exit_timestamp) {
+          const exitDate = new Date(trade.exit_timestamp);
+          document.getElementById('exitDateInput').value = exitDate.toISOString().slice(0, 16);
+        }
+        
+        form.dataset.editId = trade.id;
+        AppState.currentEditing = trade.id;
+      } else {
+        // Mode création
+        title.textContent = 'Nouveau Trade';
+        deleteBtn.style.display = 'none';
+        form.reset();
+        delete form.dataset.editId;
+        AppState.currentEditing = null;
+        
+        // Définir la date actuelle par défaut
+        const now = new Date();
+        document.getElementById('entryDateInput').value = now.toISOString().slice(0, 16);
+      }
+      
+      modal.style.display = 'flex';
+    }
+    
+    function openAuthModal(isSignup = false) {
+      const modal = document.getElementById('authModal');
+      const tabs = modal.querySelectorAll('.tab');
+      const confirmGroup = document.getElementById('confirmPasswordGroup');
+      
+      // Activer le bon tab
+      tabs.forEach(tab => tab.classList.remove('active'));
+      if (isSignup) {
+        tabs[1].classList.add('active');
+        confirmGroup.style.display = 'block';
+      } else {
+        tabs[0].classList.add('active');
+        confirmGroup.style.display = 'none';
+      }
+      
+      modal.style.display = 'flex';
+    }
+
+    function openConfirmModal(message, callback) {
+      const modal = document.getElementById('confirmModal');
+      document.getElementById('confirmMessage').textContent = message;
+      
+      const okBtn = document.getElementById('confirmOkBtn');
+      const cancelBtn = document.getElementById('confirmCancelBtn');
+      
+      // Nettoyer les événements précédents
+      okBtn.onclick = null;
+      cancelBtn.onclick = null;
+      
+      okBtn.onclick = () => {
+        modal.style.display = 'none';
+        if (callback) callback(true);
+      };
+      
+      cancelBtn.onclick = () => {
+        modal.style.display = 'none';
+        if (callback) callback(false);
+      };
+      
+      modal.style.display = 'flex';
+    }
+
+    // ========== AUTHENTIFICATION COMPLÈTE ==========
+    async function signUp(email, password) {
+      try {
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        return { success: true, user: userCredential.user };
+      } catch (error) {
+        return { success: false, error: error.message };
+      }
+    }
+    
+    async function signIn(email, password) {
+      try {
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        return { success: true, user: userCredential.user };
+      } catch (error) {
+        return { success: false, error: error.message };
+      }
+    }
+    
+    async function signOut() {
+      try {
+        await auth.signOut();
+        AppState.currentUser = null;
+        AppState.currentEditing = null;
+        AppState.loadFromLocal();
+        renderAll();
+        showToast('Déconnexion réussie', 'success');
+      } catch (error) {
+        showToast('Erreur de déconnexion', 'error');
+      }
+    }
+    
+    function checkAuth() {
+      auth.onAuthStateChanged(async (user) => {
+        if (user) {
+          AppState.currentUser = user;
+          await AppState.loadFromCloud();
+          showToast(`Bienvenue ${user.email}`, 'success');
+        } else {
+          AppState.currentUser = null;
+          AppState.currentEditing = null;
+          AppState.loadFromLocal();
+        }
+        renderAll();
+      });
+    }
+
+    // ========== IMPORT/EXPORT COMPLET ==========
+    function exportToCSV() {
+      const headers = ['id', 'symbol', 'side', 'entry_price', 'exit_price', 'size', 'fees', 'taxes', 'entry_timestamp', 'exit_timestamp', 'confidence', 'score', 'comment', 'market', 'computed_pnl'];
+      
+      const csvContent = [
+        headers.join(','),
+        ...AppState.trades.map(trade => 
+          headers.map(header => {
+            let value = trade[header];
+            if (value === null || value === undefined) value = '';
+            
+            if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
+              value = '"' + value.replace(/"/g, '""') + '"';
+            }
+            
+            return value;
+          }).join(',')
+        )
+      ].join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `trades_export_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      showToast('CSV exporté avec succès', 'success');
+    }
+    
+    function exportToJSON() {
+      const data = JSON.stringify(AppState.trades, null, 2);
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `trades_export_${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('JSON exporté avec succès', 'success');
+    }
+    
+    function importFromCSV(csvContent) {
+      try {
+        const lines = csvContent.split('\n').filter(line => line.trim() !== '');
+        if (lines.length < 2) {
+          showToast('Fichier CSV vide', 'error');
+          return;
+        }
+        
+        const headers = lines[0].split(',').map(h => h.trim());
+        const newTrades = [];
+        
+        for (let i = 1; i < lines.length; i++) {
+          try {
+            const values = lines[i].split(',');
+            const trade = {};
+            
+            for (let j = 0; j < headers.length; j++) {
+              const header = headers[j];
+              let value = values[j] || '';
+              
+              if (typeof value === 'string') {
+                value = value.replace(/^"|"$/g, '').trim();
+              }
+              
+              switch (header) {
+                case 'id':
+                  trade.id = value || cryptoRandomId();
+                  break;
+                case 'symbol':
+                  trade.symbol = value;
+                  break;
+                case 'side':
+                  trade.side = value.toLowerCase();
+                  break;
+                case 'entry_price':
+                  trade.entry_price = parseFloat(value) || 0;
+                  break;
+                case 'exit_price':
+                  trade.exit_price = value ? parseFloat(value) : null;
+                  break;
+                case 'size':
+                  trade.size = parseFloat(value) || 0;
+                  break;
+                case 'fees':
+                  trade.fees = parseFloat(value) || 0;
+                  break;
+                case 'taxes':
+                  trade.taxes = parseFloat(value) || 0;
+                  break;
+                case 'entry_timestamp':
+                  trade.entry_timestamp = value || new Date().toISOString();
+                  break;
+                case 'exit_timestamp':
+                  trade.exit_timestamp = value || null;
+                  break;
+                case 'confidence':
+                  trade.confidence = parseInt(value) || 50;
+                  break;
+                case 'score':
+                  trade.score = parseInt(value) || 50;
+                  break;
+                case 'comment':
+                  trade.comment = value || '';
+                  break;
+                case 'market':
+                  trade.market = value || 'spot';
+                  break;
+              }
+            }
+            
+            // Calculer les champs dérivés
+            trade.notional = trade.entry_price * trade.size;
+            trade.computed_pnl = computePnL(trade);
+            trade.duration_seconds = calculateDuration(trade.entry_timestamp, trade.exit_timestamp);
+            trade.updated_at = new Date().toISOString();
+            
+            if (!trade.timezone) trade.timezone = 'Europe/Paris';
+            
+            try {
+              validateTrade(trade);
+              newTrades.push(trade);
+            } catch (validationError) {
+              console.warn('Trade ignoré:', validationError);
+            }
+            
+          } catch (error) {
+            console.warn('Ligne CSV ignorée:', error);
+          }
+        }
+        
+        if (newTrades.length > 0) {
+          const existingIds = new Set(AppState.trades.map(t => t.id));
+          const uniqueNewTrades = newTrades.filter(t => !existingIds.has(t.id));
+          
+          AppState.trades = [...uniqueNewTrades, ...AppState.trades];
+          AppState.persistToLocal();
+          renderAll();
+          showToast(`${uniqueNewTrades.length} trades importés avec succès`, 'success');
+        } else {
+          showToast('Aucun nouveau trade à importer', 'warning');
+        }
+        
+      } catch (error) {
+        console.error('Erreur import CSV:', error);
+        showToast('Erreur lors de l\'import CSV', 'error');
+      }
+    }
+    
+    function importFromJSON(jsonContent) {
+      try {
+        const trades = JSON.parse(jsonContent);
+        if (!Array.isArray(trades)) {
+          showToast('Format JSON invalide', 'error');
+          return;
+        }
+        
+        const existingIds = new Set(AppState.trades.map(t => t.id));
+        const newTrades = trades.filter(t => t && t.id && !existingIds.has(t.id));
+        
+        if (newTrades.length > 0) {
+          AppState.trades = [...newTrades, ...AppState.trades];
+          AppState.persistToLocal();
+          renderAll();
+          showToast(`${newTrades.length} trades importés avec succès`, 'success');
+        } else {
+          showToast('Aucun nouveau trade à importer', 'warning');
+        }
+        
+      } catch (error) {
+        console.error('Erreur import JSON:', error);
+        showToast('Erreur lors de l\'import JSON', 'error');
+      }
+    }
+
+    // ========== ÉVÉNEMENTS COMPLETS ==========
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialiser l'application
+      AppState.init();
+      initChart();
+      checkAuth();
+      renderAll();
+      
+      // Navigation bottom
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.preventDefault();
+          const view = item.dataset.view;
+          showView(view);
+        });
+      });
+      
+      // Navigation par tabs
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', (e) => {
+          const parent = e.target.closest('.tabs');
+          if (parent) {
+            parent.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            e.target.classList.add('active');
+            
+            // Gérer les tabs analytics
+            if (parent.closest('#analyticsView')) {
+              document.getElementById('analyticsOverview').classList.add('hidden');
+              document.getElementById('analyticsPerformance').classList.add('hidden');
+              document.getElementById('analyticsDistribution').classList.add('hidden');
+              
+              const tabName = e.target.dataset.tab;
+              document.getElementById(`analytics${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`).classList.remove('hidden');
+            }
+            
+            // Gérer les tabs auth
+            if (parent.closest('#authModal')) {
+              const isSignup = e.target.dataset.tab === 'signup';
+              const confirmGroup = document.getElementById('confirmPasswordGroup');
+              const submitBtn = document.getElementById('authSubmit');
+              
+              if (isSignup) {
+                confirmGroup.style.display = 'block';
+                submitBtn.textContent = 'S\'inscrire';
+              } else {
+                confirmGroup.style.display = 'none';
+                submitBtn.textContent = 'Se connecter';
+              }
+            }
+          }
+        });
+      });
+      
+      // Actions dashboard
+      document.getElementById('quickTradeBtn').addEventListener('click', () => openTradeModal());
+      document.getElementById('addQuickTradeBtn').addEventListener('click', () => openTradeModal());
+      document.getElementById('viewAllTradesBtn').addEventListener('click', () => showView('trades'));
+      document.getElementById('editCapitalBtn').addEventListener('click', () => {
+        document.getElementById('capitalInput').value = AppState.capital;
+        showView('settings');
+      });
+      document.getElementById('calculatorBtn').addEventListener('click', () => {
+        // Scroll to calculator
+        document.getElementById('dashboardView').scrollTo({
+          top: document.getElementById('dashboardView').scrollHeight,
+          behavior: 'smooth'
+        });
+      });
+      
+      // Calculateur Risk/Reward
+      document.getElementById('calculateRRBtn').addEventListener('click', () => {
+        const capital = parseFloat(document.getElementById('rrCapital').value) || AppState.capital;
+        const riskPercent = parseFloat(document.getElementById('rrRisk').value) || 1;
+        const entry = parseFloat(document.getElementById('rrEntry').value) || 0;
+        const stop = parseFloat(document.getElementById('rrStop').value) || 0;
+        const target = parseFloat(document.getElementById('rrTarget').value) || 0;
+        
+        if (entry > 0 && stop > 0 && target > 0) {
+          const riskPerUnit = Math.abs(entry - stop);
+          const rewardPerUnit = Math.abs(target - entry);
+          const riskRewardRatio = rewardPerUnit / riskPerUnit;
+          
+          const positionSize = (capital * riskPercent / 100) / riskPerUnit;
+          const potentialLoss = positionSize * riskPerUnit;
+          const potentialGain = positionSize * rewardPerUnit;
+          
+          document.getElementById('rrResult').innerHTML = `
+            <div>Ratio R:R: <strong>1:${riskRewardRatio.toFixed(2)}</strong></div>
+            <div>Size: <strong>${positionSize.toFixed(2)} units</strong></div>
+            <div>Potential Loss: <strong>${potentialLoss.toFixed(2)} €</strong></div>
+            <div>Potential Gain: <strong>${potentialGain.toFixed(2)} €</strong></div>
+          `;
+        } else {
+          document.getElementById('rrResult').textContent = 'Veuillez remplir entry, stop et target';
+        }
+      });
+      
+      // Gestion trades
+      document.getElementById('newTradeBtn').addEventListener('click', () => openTradeModal());
+      document.getElementById('exportTradesBtn').addEventListener('click', exportToCSV);
+      
+      // Import/Export
+      document.getElementById('importCSVBtn').addEventListener('click', () => document.getElementById('fileInput').click());
+      document.getElementById('importJSONBtn').addEventListener('click', () => document.getElementById('fileInput').click());
+      document.getElementById('exportCSVBtn').addEventListener('click', exportToCSV);
+      document.getElementById('exportJSONBtn').addEventListener('click', exportToJSON);
+      document.getElementById('backupCloudBtn').addEventListener('click', () => AppState.syncToCloud());
+      document.getElementById('restoreCloudBtn').addEventListener('click', () => AppState.loadFromCloud());
+      
+      // Gestion fichier
+      document.getElementById('fileInput').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const content = e.target.result;
+          if (file.name.endsWith('.csv')) {
+            importFromCSV(content);
+          } else if (file.name.endsWith('.json')) {
+            importFromJSON(content);
+          }
+          e.target.value = ''; // Reset input
+        };
+        reader.readAsText(file);
+      });
+      
+      // Paramètres
+      document.getElementById('loginBtn').addEventListener('click', () => openAuthModal(false));
+      document.getElementById('signupBtn').addEventListener('click', () => openAuthModal(true));
+      document.getElementById('logoutBtn').addEventListener('click', signOut);
+      document.getElementById('saveSettingsBtn').addEventListener('click', saveSettings);
+      document.getElementById('clearDataBtn').addEventListener('click', () => {
+        openConfirmModal('Êtes-vous sûr de vouloir supprimer toutes les données ? Cette action est irréversible.', (confirmed) => {
+          if (confirmed) {
+            AppState.trades = [];
+            AppState.capital = 10000;
+            AppState.persist Cette action est irréversible.', (confirmed) => {
+          if (confirmed) {
+            AppState.trades = [];
+            AppState.capital = 10000;
+            AppState.persistToLocal();
+            renderAll();
+            showToast('Toutes les données ont été supprimées', 'success');
+          }
+        });
+      });
+      
+      // Formulaire trade
+      document.getElementById('tradeForm').addEventListener('submit', saveTrade);
+      document.getElementById('closeTradeModal').addEventListener('click', () => {
+        document.getElementById('tradeModal').style.display = 'none';
+      });
+      document.getElementById('deleteTradeBtn').addEventListener('click', () => {
+        openConfirmModal('Êtes-vous sûr de vouloToLocal();
+            renderAll();
+            showToast('Toutes les données ont été supprimées', 'success');
+          }
+        });
+      });
+      
+      // Formulaire trade
+      document.getElementById('tradeForm').addEventListener('submit', saveTrade);
+      document.getElementById('closeTradeModal').addEventListener('click', () => {
+        document.getElementById('tradeModal').style.display = 'none';
+      });
+      document.getElementById('deleteTradeBtn').addEventListener('click', () => {
+        openConfirmModal('Êtes-vous sûr de vouloir supprimer ce trade ?', (confirmed) => {
+          if (confirmed && AppState.currentEditing) {
+           ir supprimer ce trade ?', (confirmed) => {
+          if (confirmed && AppState AppState.trades = AppState.trades.filter(t => t.id !== AppState.currentEditing);
+            AppState.persistToLocal();
+            renderAll();
+            document.getElementById('tradeModal').style.display = 'none';
+            showToast('Trade supprimé', 'success');
+          }
+        });
+     .currentEditing) {
+            AppState.trades = AppState.trades.filter(t => t.id !== AppState.currentEditing);
+            AppState.persistToLocal();
+            renderAll();
+            document.getElementById('tradeModal').style.display = 'none';
+            showToast('Trade supprimé', 'success');
+          }
+        });
+      });
+      
+      // Boutons helper trade
+      document.getElementById('setEntryNowBtn').addEventListener('click', () => {
+        document.getElementById('entryDateInput').value = });
+      
+      // Boutons helper trade
+      document.getElementById('setEntryNowBtn').addEventListener('click', () => {
+        document.getElementById('entryDateInput').value = new Date().toISOString().slice(0, 16);
+      });
+      document.getElementById('setExitNowBtn').addEventListener('click', () => new Date().toISOString().slice(0, 16);
+      });
+      document.getElementById('setExitNowBtn').addEventListener(' {
+        document.getElementById('exitDateInput').value = new Date().toISOString().slice(0, 16);
+      });
+      document.getElementById('markBackfillBtn').addEventListener('click', () => {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - click', () => {
+        document.getElementById('exitDateInput').value = new Date().toISOString().slice(0, 16);
+      });
+      document.getElementById('markBackfillBtn').addEventListener('click', () => {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        document.getElementById('entryDateInput').value = yesterday.toISOString().slice(0, 16);
+      });
+      
+      // Formulaire auth
+      document.getElementById('authForm').addEventListener('submit', handleAuth);
+      document.getElementById('closeAuthModal').1);
+        document.getElementById('entryDateInput').value = yesterday.toISOString().slice(0, 16);
+      });
+      
+      // Formulaire auth
+      document.getElementById('authForm').addEventListener('submit', handleAuth);
+      document.getElementById('closeAuthModal').addEventListener('click', () => {
+        document.getElementById('authModal').style.display = 'none';
+      });
+      
+      // Plein écran
+      document.getElementById('addEventListener('click', () => {
+        document.getElementById('authModal').style.display = 'none';
+      });
+      
+      // Plein écran
+      document.getElementById('equityFullscreenBtn').addEventListener('click', () => {
+        document.getElementById('chartModal').style.display = 'flex';
+        // ImplequityFullscreenBtn').addEventListener('click', () => {
+        document.getElementById('chartModal').style.display = 'flex';
+        // Implémenter l'initialémenter l'initialisation du graphique plein écran
+      });
+      document.getElementById('closeChartModal').addEventListener('click', () => {
+        document.getElementById('chartModal').isation du graphique plein écran
+      });
+      document.getElementById('closeChartModal').addEventListener('click', () => {
+        document.getElementById('chartModal').style.display = 'none';
+      });
+      
+      // Synchronisation
+      document.getElementById('syncButton').addEventListener('click', forceSync);
+      document.getElementById('refreshAnalyticsBtn').addEventListener('click', () => {
+        renderAll();
+        showToast('style.display = 'none';
+      });
+      
+      // Synchronisation
+      document.getElementById('syncButton').addEventListener('click', forceSync);
+      document.getElementById('refreshAnalyticsBtn').addEventListener('click', () => {
+        renderAll();
+        showToast('AnalysesAnalyses actualisées', 'success');
+      });
+      
+      // Thème
+      document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+      
+      // Menu
+      document.getElementById('menuButton').addEventListener('click', () => {
+        showView('settings');
+      });
+      
+      // Fermer actualisées', 'success');
+      });
+      
+      // Thème
+      document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+      
+      // Menu
+      document.getElementById('menuButton').addEventListener('click', () => {
+        showView('settings');
+      });
+      
+      // les modals en cliquant à l'extérieur
+      document.querySelectorAll('.modal-backdrop').forEach(modal => {
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) {
+            modal.style.display = 'none';
+          }
+        });
+      });
+    });
+    
+    Fermer les modals en cliquant à l'extérieur
+      document.querySelectorAll('.modal-backdrop').forEach(modal => {
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) {
+            modal.style.display = ' async function saveTrade(e) {
+      e.preventDefault();
+      
+      const form = e.target;
+      const trade = {
+        symbol: document.getElementById('symbolInput').value.toUpperCase(),
+        market: document.getElementById('marketInput').value,
+        side: document.getElementById('sideInput').value,
+        size: parseFloatnone';
+          }
+        });
+      });
+    });
+    
+    async function saveTrade(e) {
+      e.preventDefault();
+      
+      const form = e.target;
+      const trade = {
+        symbol: document.getElementById('symbolInput').value.toUpperCase(),
+        market: document.getElementById('marketInput').value,
+        side: document.getElementById('sideInput').value,
+        size: parseFloat(document.getElementById('sizeInput').value),
+        entry_price: parseFloat(document.getElementById('entryInput').value),
+        exit_price: document.getElementById('exit(document.getElementById('sizeInput').value),
+        entry_price: parseFloat(document.getElementById('entryInput').value),
+        exit_price: document.getElementById('exitInput').value ? parseFloat(document.getElementById('exitInput').value) : null,
+        fees: parseFloat(document.getElementById('feesInput').value),
+        taxes:Input').value ? parseFloat(document.getElementById('exitInput').value) : null,
+        fees: parseFloat(document.getElementById('feesInput').value),
+        taxes: parseFloat(document.getElementById('taxesInput').value),
+        confidence: parseFloat(document.getElementById('taxesInput').value),
+        confidence: parseInt(document.getElementById('confidenceInput').value),
+        score: parseInt(document.getElementById('scoreInput').value),
+        comment: document parseInt(document.getElementById('confidenceInput').value),
+        score: parseInt(document.getElementById('scoreInput').value),
+        comment: document.getElementById('commentInput').value,
+        timezone: document.getElementById('timezoneInput').value,
+        entry_timestamp: document.getElementById('entryDateInput').value ? new Date(document.getElementById('entryDateInput').value).toISOString() : new Date().toISOString(),
+        exit_timestamp: document.getElementById.getElementById('commentInput').value,
+        timezone: document.getElementById('timezoneInput').value,
+        entry_timestamp: document.getElementById('entryDateInput').value ? new Date(document.getElementById('entryDateInput').value).toISOString() : new Date().toISOString(),
+        exit_timestamp: document.getElementById('exitDate('exitDateInput').value ? new Date(document.getElementById('exitDateInput').value).toISOString() : null
+      };
+      
+      try {
+        validateTrade(trade);
+        
+        // Calculer les champs dérivés
+        trade.notional = trade.entry_price * trade.size;
+        trade.computed_pnl = computePnL(trade);
+        trade.durationInput').value ? new Date(document.getElementById('exitDateInput').value).toISOString() : null
+      };
+      
+      try {
+        validateTrade(trade);
+        
+        // Calculer les champs dérivés
+        trade.notional = trade.entry_price * trade.size;
+        trade.computed_pnl = computePnL(trade);
+        trade.duration_seconds = calculateDuration(trade.entry_timestamp, trade.exit_timestamp);
+        trade.updated_at = new Date().toISOString();
+        
+        if (form.dataset.editId) {
+          // Édition
+          const index = AppState.trades.findIndex(t => t.id === form.dataset.editId);
+          if (index !== -1) {
+            trade.id = form.dataset.editId;
+            AppState.trades[index] = trade;
+          }
+        } else {
+          // Nouveau trade
+          trade.id_seconds = calculateDuration(trade.entry_timestamp, trade.exit_timestamp);
+        trade.updated_at = new Date().toISOString();
+        
+        if (form.dataset.editId) {
+          // Édition
+          const index = AppState.trades.findIndex(t => t.id === form.dataset.editId);
+          if (index !== -1) {
+            trade.id = form.dataset.editId;
+            AppState.trades[index] = trade;
+          }
+        } else {
+          // Nouveau trade
+          trade.id = cryptoRandomId();
+          AppState.trades.unshift(trade);
+        }
+        
+        await AppState.persistToLocal();
+        if (AppState.currentUser && AppState.settings.autoSync) {
+          await AppState.syncToCloud();
+        }
+        
+        renderAll();
+        document.getElementById('tradeModal').style.display = 'none';
+        showToast('Trade enregistré avec succès', 'success');
+        
+      } catch (error) {
+        showToast(' = cryptoRandomId();
+          AppState.trades.unshift(trade);
+        }
+        
+        await AppState.persistToLocal();
+        if (AppState.currentUser && AppState.settings.autoSync) {
+          await AppState.syncToCloud();
+        }
+        
+        renderAll();
+        document.getElementById('tradeModal').style.display = 'none';
+        showToast('Trade enregistré avec succès', 'success');
+        
+      } catch (error) {
+        showToast('Erreur: ' + error.message, 'error');
+      }
+    }
+    
+    async function handleAuth(e) {
+      e.preventDefault();
+      
+      const email = document.getElementById('authEmail').value;
+      const password = document.getElementById('authPassword').value;
+      const isSignup = document.querySelector('#authModal .tab.active').dataset.tab === 'signup';
+      
+      let result;
+      if (isSignup) {
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        if (password !== confirmPassword) {
+          document.getElementById('authMessage').textContent = 'Les mots de passe ne correspondent pas';
+          return;
+        }
+        result = await signUp(email, password);
+      } else {
+        result = await signIn(email, passwordErreur: ' + error.message, 'error');
+      }
+    }
+    
+    async function handleAuth(e) {
+      e.preventDefault();
+      
+      const email = document.getElementById('authEmail').value;
+      const password = document.getElementById('authPassword').value;
+      const isSignup = document.querySelector('#authModal .tab.active').dataset.tab === 'signup';
+      
+      let result;
+      if (isSignup) {
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        if (password !== confirmPassword) {
+          document.getElementById('authMessage').textContent = 'Les mots de passe ne correspondent pas';
+          return;
+        }
+        result = await signUp(email, password);
+      } else {
+        result = await signIn(email, password);
+      }
+      
+      if (result.success) {
+        document.getElementById('authModal').style.display = 'none';
+        document.getElementById('authForm').reset();
+        showToast(isSignup ? 'Compte créé avec succès !' : 'Connexion réussie !', 'success');
+      } else {
+        document.getElementById('authMessage').textContent = result.error;
+      }
+    }
+    
+    function saveSettings() {
+      const capital = parseFloat(document.getElementById('capitalInput').value);
+      if (!isNaN(capital));
+      }
+      
+      if (result.success) {
+        document.getElementById('authModal').style.display = 'none';
+        document.getElementById('authForm').reset();
+        showToast(isSignup ? 'Compte créé avec succès !' : 'Connexion réussie !', 'success');
+      } else {
+        document.getElementById('authMessage').textContent = result.error;
+      }
+    }
+    
+    function saveSettings() {
+      const capital = parseFloat(document.getElementById('capitalInput').value);
+      if && capital > 0) {
+        AppState.capital = capital;
+      }
+      
+      AppState.settings.currency = document.getElementById('currencySelect').value;
+      AppState.settings.timezone = document.getElementById('timezoneSelect').value;
+      AppState.settings.autoSync = document.getElementById('autoSyncCheck (!isNaN(capital) && capital > 0) {
+        AppState.capital = capital;
+      }
+      
+      AppState.settings.currency = document.getElementById('currencySelect').value;
+      AppState.settings.timezone = document.getElementById('timezoneSelect').value;
+      AppState.settings.autoSync = document.getElementById('autoSyncCheckbox').checked;
+      AppState.settings.notifications = document.getElementById('notificationsCheckbox').checked;
+      
+      AppState.persistToLocal();
+      renderAll();
+      showToast('Paramètres sauvegardés', 'box').checked;
+      AppState.settings.notifications = document.getElementById('notificationsCheckbox').checked;
+      
+      AppState.persistToLocal();
+      renderAll();
+      showToast('Paramètres sauvegardés', 'success');
+    }
+    
+    async function forceSync() {
+      if (!AppState.currentUser) {
+        showToast('Connectez-vous pour synchroniser', 'error');
+        return;
+      }
+      
+      showToast('Synchronisation en cours...', 'info');
+      const success = await AppState.syncToCloud();
+      showToast(success ? 'Synchronisation réussie' : 'Erresuccess');
+    }
+    
+    async function forceSync() {
+      if (!AppState.currentUser) {
+        showToast('Connectez-vous pour synchroniser', 'error');
+        return;
+      }
+      
+      showToast('Synchronisation en cours...', 'info');
+      const success = await AppState.syncToCloud();
+      showToast(success ? 'Synchronisation réussie' : 'Erreur de synchronisation', success ? 'success' : 'error');
+    }
+    
+    function toggleTheme() {
+      const isDark = document.documentElement.style.getPropertyValue('--bg') === '#000000' || 
+                    !document.documentElement.style.getPropertyValue('--bg');
+      
+     ur de synchronisation', success ? 'success' : 'error');
+    }
+    
+    function toggleTheme() {
+      const isDark = document.documentElement.style.getPropertyValue('--bg') === '#000000' || 
+                    !document.documentElement.style.getPropertyValue('--bg');
+      
+      if (isDark) {
+        // Passer en light
+        document.documentElement.style.setProperty('--bg', '#FFFFFF');
+        document.document if (isDark) {
+        // Passer en light
+        document.documentElement.style.setProperty('--bg', '#FFFFFF');
+        document.documentElementElement.style.setProperty('--bg-card', '#F8F9FA');
+        document.documentElement.style.setProperty('--fg', '#1A1A1A');
+        document.documentElement.style.setProperty('--muted', '#666666');
+        document.documentElement.style.setProperty('--border', 'rgba(0,0,0,0.15)');
+        document.style.setProperty('--bg-card', '#F8F9FA');
+        document.documentElement.style.setProperty('--fg', '#1A1A1A');
+        document.documentElement.style.setProperty('--muted', '#666666');
+        document.documentElement.style.setProperty('--border', 'rgba(0,0,0,0.15)');
+        document.documentElement.style.setProperty('--glass', 'rgba(248,249,250,0.95)');
+        AppState.settings.theme = 'light';
+      } else {
+        // Passer en dark
+        document.documentElement.style.setProperty('--bg', '#000000');
+        document.documentElement.style.setProperty('--.documentElement.style.setProperty('--glass', 'rgba(248,249,250,0.95)');
+        AppState.settings.theme = 'light';
+      } else {
+        // Passer en dark
+        document.documentElement.style.setProperty('--bg', '#000000');
+        document.documentElement.style.setProperty('--bg-card', '#1A1A1A');
+        document.documentElementbg-card', '#1A1A1A');
+        document.documentElement.style.setProperty('--fg', '#FFFFFF');
+        document.documentElement.style.setProperty('--muted', '#8E8E93');
+        document.documentElement.style.setProperty('--border', 'rgba(255,255,255,0.15)');
+        document.documentElement.style.setProperty('--glass', 'rgba(30,30,30,0.95)');
+        App.style.setProperty('--fg', '#FFFFFF');
+        document.documentElement.style.setProperty('--muted', '#8E8E93');
+        document.documentElement.style.setProperty('--border', 'rgba(255,255,255,0.15)');
+        document.documentElement.style.setProperty('--glass', 'rgba(30,30,30,0.95)');
+        AppState.settingsState.settings.theme = 'dark';
+      }
+      
+      AppState.persistToLocal();
+    }
+
+    // Gestion du swipe pour navigation
+    let startX = 0;
+    document.getElementById('mainContent').addEventListener('touchstart', (e) => {
+      startX = e.touches[0.theme = 'dark';
+      }
+      
+      AppState.persistToLocal();
+    }
+
+    // Gestion du swipe pour navigation
+    let startX = 0;
+    document.getElementById('mainContent').addEventListener('touchstart', (e) => {
+      startX = e.touches[0].clientX;
+    });
+    
+    document.getElementById('mainContent').addEventListener('touchend', (e) => {
+      const endX = e.changedTouches[0].clientX;
+      const diff = startX - endX;
+      
+      if (Math.abs(diff) > 50) { // Seuil].clientX;
+    });
+    
+    document.getElementById('mainContent').addEventListener('touchend', (e) => {
+      const endX = e.changedTouches[0].clientX;
+      const diff = startX - endX;
+      
+      if (Math.abs(diff) > 50) { // Seuil de swipe
+        const views = ['dashboard', 'trades', 'analytics', 'import', 'settings de swipe
+        const views = ['dashboard', 'trades', 'analytics', 'import', 'settings'];
+        const currentView = document.querySelector('.nav-item.active').dataset.view;
+        const currentIndex = views.indexOf(currentView);
+        
+        if (diff > 0 && currentIndex < views.length - 1) {
+         '];
+        const currentView = document.querySelector('.nav-item.active').dataset.view;
+        const currentIndex = views.indexOf(currentView);
+        
+        if (diff > 0 && currentIndex < views.length - 1) {
+          // Swipe gauche -> droite
+          showView(views[currentIndex + 1]);
+        } else if (diff < 0 && currentIndex > 0) {
+ // Swipe gauche -> droite
+          showView(views[currentIndex + 1]);
+        } else if (diff < 0 && currentIndex > 0) {
+          // Swipe droite -> gauche
+          showView(views[currentIndex - 1]);
+        }
+      }
+    });
+
+    // Pull          // Swipe droite -> gauche
+          showView(views[currentIndex - 1]);
+        }
+      }
+    });
+
+    // Pull to refresh
+    let startY = 0;
+    let isPullToRefresh = false;
+    
+    document.getElementById('mainContent').addEventListener('touchstart', (e) => {
+      start to refresh
+    let startY = 0;
+    let isPullToRefresh = false;
+    
+    document.getElementById('mainContent').addEventListener('touchstart', (e) => {
+      startY = e.touches[0].clientY;
+      isPullToRefresh = windowY = e.touches[0].clientY;
+      isPullToRefresh = window.scrollY === 0;
+    });
+    
+    document.getElementById('mainContent').addEventListener('touchmove', (e) => {
+      if (!isPullToRefresh) return;
+      
+      const currentY =.scrollY === 0;
+    });
+    
+    document.getElementById('mainContent').addEventListener('touchmove', (e) => {
+      if (!isPullToRefresh) e.touches[0].clientY;
+      const diff = currentY - startY;
+      
+      if (diff > 100) {
+        e.preventDefault();
+      }
+    });
+    
+    document.getElementById('mainContent').addEventListener('touchend', (e) => {
+      if (!isPullToRefresh) return;
+      
+      const return;
+      
+      const currentY = e.touches[0].clientY;
+      const diff = currentY - startY;
+      
+      if (diff > 100) {
+        e.preventDefault();
+      }
+    });
+    
+    document.getElementById('mainContent').addEventListener('touchend', (e) => {
+      if (!isPullToRefresh) return;
+      
+      const endY = e.changedTouches[0].clientY;
+      const diff = endY - startY;
+      
+      if (diff > 100) {
+        endY = e.changedTouches[0].clientY;
+      const diff = endY - startY;
+      
+      if (diff > 100) {
+        // Pull to refresh
+        renderAll();
+        showToast('Actualisé', 'success');
+      }
+      
+      // Pull to refresh
+        renderAll();
+        showToast('Actualisé', 'success');
+      }
+      
+      isPullToRefresh isPullToRefresh = false;
+    });
+
+    // Empêcher le zoom avec double tap
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function (event) {
+      const now = (new Date()).getTime();
+      if (now - lastTouchEnd <= 300) {
+        event.preventDefault();
+      }
+      = false;
+    });
+
+    // Empêcher le zoom avec double tap
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function (event) {
+      const now = (new Date()).getTime();
+      if (now - lastTouchEnd <= 300) {
+        event.preventDefault();
+      }
+      lastTouchEnd = now;
+    }, false);
+  </script>
+</body>
+</html>
